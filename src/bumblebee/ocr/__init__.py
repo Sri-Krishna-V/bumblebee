@@ -23,6 +23,18 @@ from bumblebee.stats import percentile
 
 logger = logging.getLogger(__name__)
 
+# Transient failures (network errors, 429, 5xx) are retried inside the held
+# semaphore slot: a couple of extra seconds on a failed request beats losing the
+# region and re-OCRing the whole document on a later run. Other 4xx responses
+# are deterministic and fail immediately.
+_RETRY_ATTEMPTS = 3  # total attempts per request
+_RETRY_BACKOFF_SECONDS = 0.5  # doubles per retry: 0.5s, then 1s
+_RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
+
+
+def _elapsed_ms(started: float) -> int:
+    return int((time.perf_counter() - started) * 1000)
+
 
 def _max_tokens_for_task(task_type: Task, config: OcrConfig) -> int:
     if task_type == Task.TABLE:
@@ -53,6 +65,7 @@ class VllmOcrClient:
         self._requests_started = 0
         self._requests_completed = 0
         self._requests_failed = 0
+        self._requests_retried = 0
         self._inflight_http = 0
         self._max_inflight_http = 0
         self._queue_latencies_ms: list[int] = []
@@ -95,23 +108,31 @@ class VllmOcrClient:
             self._inflight_http += 1
             self._max_inflight_http = max(self._max_inflight_http, self._inflight_http)
             try:
-                async with self._session.post(self._url, json=payload, timeout=self._timeout) as response:
-                    if response.status != 200:
-                        text = await response.text()
-                        request_latency_ms = int((time.perf_counter() - acquired_at) * 1000)
-                        result = self._failed(prepared, response.status, text[:500], request_latency_ms)
-                    else:
-                        data = await response.json()
-                        request_latency_ms = int((time.perf_counter() - acquired_at) * 1000)
-                        result = self._recognized(prepared, data, request_latency_ms)
-            except Exception as exc:
-                request_latency_ms = int((time.perf_counter() - acquired_at) * 1000)
-                result = self._failed(prepared, 500, f"{type(exc).__name__}: {exc}", request_latency_ms)
+                result = await self._post_once(prepared, payload)
+                for attempt in range(1, _RETRY_ATTEMPTS):
+                    if result.status_code not in _RETRYABLE_STATUSES:
+                        break
+                    self._requests_retried += 1
+                    await asyncio.sleep(_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)))
+                    result = await self._post_once(prepared, payload)
             finally:
                 self._inflight_http -= 1
         queue_latency_ms = int((acquired_at - queued_at) * 1000)
-        self._record_result(result, queue_latency_ms, request_latency_ms)
+        self._record_result(result, queue_latency_ms, result.latency_ms or 0)
         return result
+
+    async def _post_once(self, prepared: PreparedRegion, payload: dict[str, Any]) -> RecognizedRegion:
+        """Send one chat-completion request; exceptions become a failed (retryable) result."""
+        started = time.perf_counter()
+        try:
+            async with self._session.post(self._url, json=payload, timeout=self._timeout) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    return self._failed(prepared, response.status, text[:500], _elapsed_ms(started))
+                data = await response.json()
+                return self._recognized(prepared, data, _elapsed_ms(started))
+        except Exception as exc:
+            return self._failed(prepared, 500, f"{type(exc).__name__}: {exc}", _elapsed_ms(started))
 
     def _recognized(self, prepared: PreparedRegion, data: dict[str, Any], latency_ms: int) -> RecognizedRegion:
         choices = data.get("choices") or []
@@ -172,6 +193,7 @@ class VllmOcrClient:
                 "started": self._requests_started,
                 "completed": self._requests_completed,
                 "failed": self._requests_failed,
+                "retried": self._requests_retried,
                 "inflight_http": self._inflight_http,
                 "max_inflight_http": self._max_inflight_http,
             },
