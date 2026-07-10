@@ -84,12 +84,12 @@ def crop_executor():
     executor.shutdown(wait=False)
 
 
-def build_pipeline(render, reader=None, config: OcrConfig | None = None, crop_executor=None):
+def build_pipeline(render, reader=None, config: OcrConfig | None = None, crop_executor=None, ocr=None):
     return Pipeline(
         config=config or OcrConfig(page_chunk_size=2, max_inflight_pdfs=4),
         render=render,
         layout=FakeLayout(),
-        ocr=FakeOcr(),
+        ocr=ocr or FakeOcr(),
         crop_executor=crop_executor,
         read=reader or (lambda document: document.uri.encode()),
         batch_id="batch-test",
@@ -191,6 +191,32 @@ async def test_failed_document_yields_failure_stats_not_exception(crop_executor)
     assert failed.stats["status"] == "failed"
     assert failed.stats["error"]["phase"] == "render"
     assert failed.stats["error"]["type"] == "ValueError"
+
+
+async def test_failed_ocr_requests_fail_the_document(crop_executor):
+    class FlakyOcr(FakeOcr):
+        """Fails every region beyond page 0, so only multi-page docs fail."""
+
+        async def recognize(self, prepared):
+            from dataclasses import replace
+
+            regions = await super().recognize(prepared)
+            return [replace(r, content=None, status_code=503) if r.region.page_index >= 1 else r for r in regions]
+
+    render = FakeRender({"good": 1, "bad": 3})
+    pipeline = build_pipeline(render, crop_executor=crop_executor, ocr=FlakyOcr())
+    processed = await collect(pipeline, [doc("good"), doc("bad")])
+    by_id = {p.document.input_id: p for p in processed}
+
+    assert by_id["id-good"].result is not None
+    assert by_id["id-good"].stats["status"] == "succeeded"
+    failed = by_id["id-bad"]
+    assert failed.result is None
+    assert failed.stats["status"] == "failed"
+    assert failed.stats["error"]["phase"] == "ocr"
+    assert failed.stats["error"]["type"] == "OcrError"
+    assert "2/3 OCR requests failed" in failed.stats["error"]["message"]
+    assert "503" in failed.stats["error"]["message"]
 
 
 async def test_reader_errors_are_failures(crop_executor):

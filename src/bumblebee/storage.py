@@ -58,7 +58,8 @@ class Storage(Protocol):
 def resolve_storage(uri: str) -> Storage:
     """Return a storage backend for a local path or cloud URI."""
     scheme = urlparse(str(uri)).scheme.lower()
-    if scheme in {"", "file"}:
+    # A single-letter "scheme" is a Windows drive letter (C:\...), not a URI.
+    if scheme in {"", "file"} or len(scheme) == 1:
         return LocalStorage()
     if scheme in {"s3", "gs", "gcs", "az", "abfs", "abfss"}:
         return FsspecStorage(storage_options=_options_for_scheme(scheme))

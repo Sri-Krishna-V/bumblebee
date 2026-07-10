@@ -31,6 +31,7 @@ from bumblebee.models import (
     DocumentInput,
     DocumentResult,
     DocumentTimings,
+    OcrError,
     ProcessedDoc,
     RecognizedRegion,
     Region,
@@ -197,6 +198,17 @@ class Pipeline:
 
             phase = "ocr"
             recognized_regions = [region for batch in await asyncio.gather(*ocr_batches) for region in batch]
+            # Any region that still failed after the client's retries would be
+            # silently dropped by the formatter; fail the document instead so the
+            # completion marker stays honest and resumable runs retry it.
+            failed_requests = [region for region in recognized_regions if region.status_code not in (None, 200)]
+            if failed_requests:
+                statuses = sorted({region.status_code for region in failed_requests if region.status_code is not None})
+                raise OcrError(
+                    phase="ocr",
+                    message=f"{len(failed_requests)}/{len(recognized_regions)} OCR requests failed "
+                    f"(statuses: {statuses})",
+                )
             ocr_done = time.perf_counter()
             ocr_started = first_ocr_queued if first_ocr_queued is not None else ocr_done
 
