@@ -275,6 +275,10 @@ class DocumentEngine:
                     # batch (the supervisor retries it after refiltering).
                     write_tasks.append(asyncio.create_task(persist(processed)))
                 await asyncio.gather(*write_tasks)
+                # A dead vLLM server mid-batch makes the per-document failures
+                # bogus mass connection errors; fail the whole batch instead so
+                # the supervisor refilters and retries what is incomplete.
+                self._ensure_vllm_alive()
             except BaseException:
                 for task in write_tasks:
                     task.cancel()
@@ -293,6 +297,11 @@ class DocumentEngine:
             )
         return {"batch_id": batch_id, "summary": summary, "documents": payloads}
 
+    def _ensure_vllm_alive(self) -> None:
+        """Raise if the vLLM server subprocess has exited, so batches fail loudly."""
+        if self.vllm_process is not None and (code := self.vllm_process.poll()) is not None:
+            raise RuntimeError(f"vLLM server process exited with code {code}")
+
     @contextlib.asynccontextmanager
     async def _pipeline(
         self, config: OcrConfig, *, batch_id: str | None
@@ -300,6 +309,7 @@ class DocumentEngine:
         """Bind a fresh aiohttp session and OCR client to a pipeline for one call."""
         if self.render_engine is None or self.layout_engine is None or self._crop_executor is None:
             raise RuntimeError("DocumentEngine.start() must be called before processing documents")
+        self._ensure_vllm_alive()
         connector = aiohttp.TCPConnector(limit=config.ocr_request_concurrency + 16, ttl_dns_cache=300)
         async with aiohttp.ClientSession(connector=connector) as session:
             ocr_client = VllmOcrClient(

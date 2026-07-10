@@ -66,7 +66,7 @@ async def test_process_batch_writes_outputs_and_summary(tmp_path, engine):
     assert all("_ocr_usage" not in region for page in layout for region in page)
     stats = json.loads((tmp_path / "out" / "a" / "stats.json").read_text())
     assert stats["status"] == "succeeded"
-    assert stats["output"]["markdown"].endswith("a/content.md")
+    assert stats["output"]["markdown"].replace("\\", "/").endswith("a/content.md")
     assert stats["durations_seconds"]["write"] > 0
 
 
@@ -98,3 +98,32 @@ async def test_unstarted_engine_raises():
     with pytest.raises(RuntimeError, match="start"):
         async for _ in engine.stream([doc("a")]):
             pass
+
+
+class FakeProcess:
+    """Stub vLLM subprocess whose poll() plays back the given exit codes, then repeats the last."""
+
+    def __init__(self, *codes: int | None):
+        self.codes = list(codes)
+
+    def poll(self) -> int | None:
+        return self.codes.pop(0) if len(self.codes) > 1 else self.codes[0]
+
+
+async def test_dead_vllm_server_fails_the_batch_at_entry(tmp_path, engine):
+    engine.vllm_process = FakeProcess(137)
+    with pytest.raises(RuntimeError, match="exited with code 137"):
+        await engine.process_batch([doc("a")], OcrConfig(), source="mem://", target=str(tmp_path / "out"))
+
+
+async def test_vllm_death_mid_batch_raises_after_stream(tmp_path, engine):
+    # Alive at the entry check, dead by the post-stream check.
+    engine.vllm_process = FakeProcess(None, 1)
+    with pytest.raises(RuntimeError, match="exited with code 1"):
+        await engine.process_batch([doc("a")], OcrConfig(), source="mem://", target=str(tmp_path / "out"))
+
+
+async def test_live_vllm_process_does_not_interfere(tmp_path, engine):
+    engine.vllm_process = FakeProcess(None)
+    response = await engine.process_batch([doc("a")], OcrConfig(), source="mem://", target=str(tmp_path / "out"))
+    assert response["summary"]["documents"]["succeeded"] == 1
