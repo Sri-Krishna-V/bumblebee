@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Local OCR I/O
+/output/
+/output_*/
+examples/output/
+examples/input/*.pdf
+
+# OS
+.DS_Store
+
+# Benchmark inputs/outputs (large PDFs + logs; never ship these)
+bench/
+out/
+glmocr-bench/

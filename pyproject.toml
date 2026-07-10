@@ -1,0 +1,142 @@
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[project]
+name = "bumblebee"
+version = "0.1.0"
+description = "Cheap, fast single-GPU PDF OCR (PP-DocLayoutV3 + GLM-OCR via vLLM)"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Sri Krishna V" },
+    { name = "Sri Krishna V" },
+]
+maintainers = [
+    { name = "Sri Krishna V", email = "srikrishna.vundavalli@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "aiohttp>=3.13.0",
+    "numpy>=1.26.0",
+    "opencv-python-headless>=4.10.0",
+    "pillow>=10.0.0",
+    "pypdfium2>=4.30.0",
+    "typer>=0.12.0",
+]
+
+[project.optional-dependencies]
+# The GPU inference stack. vLLM pulls a compatible torch, so it is not pinned
+# here separately. Install this for any real OCR run. vLLM is Linux/GPU-only, so
+# it carries a platform marker to keep the project lockable on macOS dev machines.
+gpu = [
+    "accelerate>=1.13.0",
+    "huggingface-hub>=0.27.0",
+    "sentencepiece>=0.2.0",
+    "transformers>=5.3.0",
+    "vllm==0.21.0 ; sys_platform == 'linux'",
+]
+# Fast FP16 layout via the ONNX Runtime TensorRT execution provider (default
+# layout backend). Falls back to the PyTorch detector if unavailable. The GPU
+# runtimes are Linux-only wheels, hence the platform markers.
+trt = [
+    "onnx>=1.17.0",
+    "onnxruntime-gpu>=1.20.0 ; sys_platform == 'linux'",
+    "tensorrt>=10.0.0,<11 ; sys_platform == 'linux'",
+]
+modal = ["modal>=1.5.0"]
+azure = [
+    "adlfs>=2026.5.0",
+    "azure-identity>=1.25.3",
+    "azure-storage-blob>=12.30.0",
+    "fsspec>=2026.6.0",
+]
+s3 = [
+    "fsspec>=2026.6.0",
+    "s3fs>=2026.6.0",
+]
+gcs = [
+    "fsspec>=2026.6.0",
+    "gcsfs>=2026.6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.410",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.25.0",
+    "ruff>=0.15.17",
+]
+
+[project.scripts]
+bumblebee = "bumblebee.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/Sri-Krishna-V/bumblebee#readme"
+Repository = "https://github.com/Sri-Krishna-V/bumblebee"
+
+[tool.uv.build-backend]
+module-name = "bumblebee"
+module-root = "src"
+
+# TensorRT/CUDA wheels used by the GPU extras live on NVIDIA's package index.
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com/"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Make `from tests.conftest import ...` work under the bare `pytest` script too.
+pythonpath = ["."]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "D",   # docstrings
+    "TID", # flake8-tidy-imports
+]
+ignore = [
+    "D100", # Ok to not have docstring for public modules
+    "D104", # Ok to not have docstring for public package
+    "D401", # First line of docstring in imperative mode
+]
+isort = { combine-as-imports = true, known-first-party = ["bumblebee"] }
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Always import via the full package path (e.g. `from bumblebee.config import ...`)
+# rather than relative imports (`from .config import ...`).
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pyright]
+include = ["src/bumblebee"]
+exclude = ["**/__pycache__", ".venv", "build", "dist"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+reportMissingImports = false

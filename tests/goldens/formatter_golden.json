@@ -1,0 +1,297 @@
+{
+ "json": [
+  [
+   {
+    "index": 0,
+    "label": "text",
+    "content": "# The Great Doc",
+    "bbox_2d": [
+     100,
+     10,
+     900,
+     60
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "doc_title"
+   },
+   {
+    "index": 1,
+    "label": "text",
+    "content": "This paragraph ends with a hyphen and the word document continues in the next block.",
+    "bbox_2d": [
+     100,
+     100,
+     900,
+     200
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 2,
+    "label": "formula",
+    "content": "$$\nE = mc^2 \\tag{1}\n$$",
+    "bbox_2d": [
+     100,
+     320,
+     800,
+     400
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "display_formula"
+   }
+  ],
+  [
+   {
+    "index": 0,
+    "label": "text",
+    "content": "## Methods",
+    "bbox_2d": [
+     100,
+     10,
+     900,
+     50
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "paragraph_title"
+   },
+   {
+    "index": 1,
+    "label": "text",
+    "content": "- first bullet",
+    "bbox_2d": [
+     100,
+     60,
+     900,
+     100
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 2,
+    "label": "text",
+    "content": "- middle bullet without dash",
+    "bbox_2d": [
+     102,
+     110,
+     900,
+     150
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 3,
+    "label": "text",
+    "content": "- third bullet",
+    "bbox_2d": [
+     101,
+     160,
+     900,
+     200
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 4,
+    "label": "image",
+    "content": null,
+    "bbox_2d": [
+     100,
+     300,
+     500,
+     600
+    ],
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "image"
+   }
+  ],
+  [
+   {
+    "index": 0,
+    "label": "table",
+    "content": "<table><tr><td>x</td></tr></table>",
+    "bbox_2d": [
+     50,
+     50,
+     950,
+     500
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "table"
+   },
+   {
+    "index": 1,
+    "label": "text",
+    "content": "(2) second item",
+    "bbox_2d": [
+     100,
+     520,
+     900,
+     560
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 2,
+    "label": "text",
+    "content": "line one\n\nline two",
+    "bbox_2d": [
+     100,
+     570,
+     900,
+     640
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 3,
+    "label": "text",
+    "content": "- bullet via dot",
+    "bbox_2d": [
+     100,
+     650,
+     900,
+     700
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 4,
+    "label": "text",
+    "content": "1) numbered",
+    "bbox_2d": [
+     100,
+     710,
+     900,
+     760
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   }
+  ],
+  [],
+  [
+   {
+    "index": 0,
+    "label": "text",
+    "content": "spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs!",
+    "bbox_2d": [
+     100,
+     100,
+     900,
+     400
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "text"
+   },
+   {
+    "index": 1,
+    "label": "formula",
+    "content": "$$\nx + y\n$$",
+    "bbox_2d": [
+     100,
+     600,
+     900,
+     650
+    ],
+    "_ocr_status_code": 200,
+    "_ocr_latency_ms": 12,
+    "_ocr_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15
+    },
+    "native_label": "inline_formula"
+   }
+  ]
+ ],
+ "markdown": "<!-- page:start 1 -->\n\n# The Great Doc\n\nThis paragraph ends with a hyphen and the word document continues in the next block.\n\n$$\nE = mc^2 \\tag{1}\n$$\n\n<!-- page:end 1 -->\n\n<!-- page:start 2 -->\n\n## Methods\n\n- first bullet\n\n- middle bullet without dash\n\n- third bullet\n\n<!-- page:end 2 -->\n\n<!-- page:start 3 -->\n\n<table><tr><td>x</td></tr></table>\n\n(2) second item\n\nline one\n\nline two\n\n- bullet via dot\n\n1) numbered\n\n<!-- page:end 3 -->\n\n<!-- page:start 4 -->\n\n<!-- page:end 4 -->\n\n<!-- page:start 5 -->\n\nspam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs! spam and eggs!\n\n$$\nx + y\n$$\n\n<!-- page:end 5 -->"
+}
