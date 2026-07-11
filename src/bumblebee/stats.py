@@ -16,7 +16,7 @@ from typing import Any, cast
 
 from bumblebee.models import DocumentInput, DocumentResult, RecognizedRegion, TokenUsage
 
-PRIVATE_JSON_KEYS = frozenset({"_ocr_usage", "_ocr_latency_ms", "_ocr_status_code"})
+PRIVATE_JSON_KEYS = frozenset({"_ocr_usage", "_ocr_latency_ms", "_ocr_status_code", "_ocr_confidence"})
 
 
 def utc_now_iso() -> str:

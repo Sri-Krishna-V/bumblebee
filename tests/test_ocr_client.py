@@ -37,14 +37,16 @@ class FakeResponse:
 
 
 class FakeSession:
-    """Returns one queued FakeResponse per POST, counting calls."""
+    """Returns one queued FakeResponse per POST, recording calls and payloads."""
 
     def __init__(self, outcomes: list[FakeResponse]):
         self.outcomes = list(outcomes)
         self.calls = 0
+        self.payloads: list[dict] = []
 
     def post(self, url, *, json, timeout):
         self.calls += 1
+        self.payloads.append(json)
         return self.outcomes.pop(0)
 
 
@@ -99,3 +101,36 @@ async def test_network_exception_is_retried():
     assert result.status_code == 200
     assert session.calls == 2
     assert ocr_client.metrics_snapshot()["requests"]["retried"] == 1
+
+
+async def test_confidence_computed_from_logprobs():
+    import math
+
+    data = {
+        **OK_DATA,
+        "choices": [
+            {
+                "message": {"content": "hello"},
+                "logprobs": {"content": [{"token": "a", "logprob": -0.2}, {"token": "b", "logprob": -0.4}]},
+            }
+        ],
+    }
+    session = FakeSession([FakeResponse(200, data=data)])
+    (result,) = await client(session).recognize([prepared()])
+    assert result.confidence == pytest.approx(math.exp(-0.3))
+    assert session.payloads[0]["logprobs"] is True  # requested by default
+
+
+async def test_confidence_none_without_logprobs_block():
+    session = FakeSession([FakeResponse(200, data=OK_DATA)])
+    (result,) = await client(session).recognize([prepared()])
+    assert result.confidence is None
+
+
+async def test_logprobs_not_requested_when_disabled():
+    session = FakeSession([FakeResponse(200, data=OK_DATA)])
+    ocr_client = VllmOcrClient(
+        session=session, base_url="http://127.0.0.1:8000/v1", config=OcrConfig(ocr_logprobs=False)
+    )
+    await ocr_client.recognize([prepared()])
+    assert "logprobs" not in session.payloads[0]

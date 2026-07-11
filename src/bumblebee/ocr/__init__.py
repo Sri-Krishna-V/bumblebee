@@ -10,6 +10,7 @@ batching: dynamic batching happens inside the engine.
 
 import asyncio
 import logging
+import math
 import time
 from typing import Any
 
@@ -34,6 +35,18 @@ _RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 def _elapsed_ms(started: float) -> int:
     return int((time.perf_counter() - started) * 1000)
+
+
+def _confidence_from_logprobs(logprobs: Any) -> float | None:
+    """Return exp(mean token logprob) from an OpenAI-style logprobs block, if present."""
+    if not isinstance(logprobs, dict):
+        return None
+    items = logprobs.get("content") or []
+    values = [item.get("logprob") for item in items if isinstance(item, dict)]
+    numeric = [float(value) for value in values if isinstance(value, int | float)]
+    if not numeric:
+        return None
+    return math.exp(sum(numeric) / len(numeric))
 
 
 def _max_tokens_for_task(task_type: Task, config: OcrConfig) -> int:
@@ -101,6 +114,8 @@ class VllmOcrClient:
             "temperature": self._config.temperature,
             "top_p": self._config.top_p,
         }
+        if self._config.ocr_logprobs:
+            payload["logprobs"] = True
         queued_at = time.perf_counter()
         async with self._semaphore:
             acquired_at = time.perf_counter()
@@ -137,9 +152,11 @@ class VllmOcrClient:
     def _recognized(self, prepared: PreparedRegion, data: dict[str, Any], latency_ms: int) -> RecognizedRegion:
         choices = data.get("choices") or []
         content = ""
+        confidence: float | None = None
         if choices:
             message = choices[0].get("message") or {}
             content = str(message.get("content") or "").strip()
+            confidence = _confidence_from_logprobs(choices[0].get("logprobs"))
         usage_raw = data.get("usage") or {}
         # The vLLM/OpenAI response reports prompt_tokens/completion_tokens; store them
         # under the input_tokens/output_tokens names used everywhere downstream.
@@ -154,6 +171,7 @@ class VllmOcrClient:
             usage=usage,
             status_code=200,
             latency_ms=latency_ms,
+            confidence=confidence,
         )
 
     def _record_result(self, result: RecognizedRegion, queue_latency_ms: int, request_latency_ms: int) -> None:
