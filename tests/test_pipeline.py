@@ -219,6 +219,79 @@ async def test_failed_ocr_requests_fail_the_document(crop_executor):
     assert "503" in failed.stats["error"]["message"]
 
 
+class ConfidenceOcr(FakeOcr):
+    """Low confidence for the first ``main_regions`` regions, high afterwards (retry pass)."""
+
+    def __init__(self, main_regions: int, low: float = 0.5, high: float = 0.95):
+        super().__init__()
+        self.main_regions = main_regions
+        self.low = low
+        self.high = high
+        self.call_sizes: list[int] = []
+
+    async def recognize(self, prepared):
+        from dataclasses import replace
+
+        self.call_sizes.append(len(prepared))
+        regions = await super().recognize(prepared)
+        confidence = self.low if self.recognized_count <= self.main_regions else self.high
+        return [replace(r, confidence=confidence) for r in regions]
+
+
+async def test_adaptive_retry_reocrs_lowest_confidence_within_budget(crop_executor):
+    render = FakeRender({"a": 10})  # 10 pages -> 10 OCR text regions
+    dpi_calls: list[tuple[int, list[int]]] = []
+    original_render = render.render
+
+    async def spy_render(pdf_bytes, config, page_indices=None):
+        dpi_calls.append((config.pdf_dpi, list(page_indices) if page_indices is not None else []))
+        return await original_render(pdf_bytes, config, page_indices)
+
+    render.render = spy_render
+    ocr = ConfidenceOcr(main_regions=10)
+    pipeline = build_pipeline(render, crop_executor=crop_executor, ocr=ocr)
+    (processed,) = await collect(pipeline, [doc("a")])
+
+    # Budget: max(1, 10 // 10) = 1 region retried, on a page re-rendered at 2x DPI.
+    assert ocr.call_sizes[-1] == 1
+    assert sum(ocr.call_sizes) == 11
+    retry_renders = [call for call in dpi_calls if call[0] == 200]
+    assert len(retry_renders) == 1 and len(retry_renders[0][1]) == 1
+
+    confidence = processed.stats["ocr_requests"]["confidence"]
+    assert confidence["low"] == 9  # one region improved to 0.95, nine still at 0.5
+    assert confidence["min"] == 0.5
+
+
+async def test_adaptive_retry_keeps_the_better_result(crop_executor):
+    render = FakeRender({"a": 1})
+    ocr = ConfidenceOcr(main_regions=1)
+    pipeline = build_pipeline(render, crop_executor=crop_executor, ocr=ocr)
+    (processed,) = await collect(pipeline, [doc("a")])
+    result = processed.result
+    assert result is not None
+    (text_region,) = [r for r in result.json[0] if r.get("_ocr_confidence") is not None]
+    assert text_region["_ocr_confidence"] == 0.95
+
+
+async def test_adaptive_retry_disabled_by_config(crop_executor):
+    render = FakeRender({"a": 1})
+    ocr = ConfidenceOcr(main_regions=1)
+    config = OcrConfig(page_chunk_size=2, max_inflight_pdfs=4, adaptive_retry=False)
+    pipeline = build_pipeline(render, crop_executor=crop_executor, ocr=ocr, config=config)
+    await collect(pipeline, [doc("a")])
+    assert ocr.call_sizes == [1]
+
+
+async def test_no_retry_when_confidence_is_high(crop_executor):
+    render = FakeRender({"a": 2})
+    ocr = ConfidenceOcr(main_regions=0)  # every call returns high confidence
+    pipeline = build_pipeline(render, crop_executor=crop_executor, ocr=ocr)
+    (processed,) = await collect(pipeline, [doc("a")])
+    assert sum(ocr.call_sizes) == 2  # no retry pass
+    assert processed.stats["ocr_requests"]["confidence"]["low"] == 0
+
+
 async def test_reader_errors_are_failures(crop_executor):
     def reader(document):
         raise FileNotFoundError(document.uri)

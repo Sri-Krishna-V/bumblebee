@@ -64,6 +64,34 @@ def make_recognized_region(
     )
 
 
+def make_text_pdf(lines: list[tuple[int, int, str]]) -> bytes:
+    """Build a minimal one-page born-digital PDF (612x792pt, Helvetica 18pt).
+
+    ``lines`` are (x, y, text) in PDF points with a bottom-up y axis. The xref
+    table is computed properly so PDFium parses it without repair heuristics.
+    """
+    content = "BT /F1 18 Tf " + " ".join(f"1 0 0 1 {x} {y} Tm ({text}) Tj" for x, y, text in lines) + " ET"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R "
+        b"/Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content.encode() + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    out = bytearray(b"%PDF-1.4\n")
+    offsets: list[int] = []
+    for i, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += f"{i} 0 obj\n".encode() + body + b"\nendobj\n"
+    xref_pos = len(out)
+    out += f"xref\n0 {len(objects) + 1}\n".encode() + b"0000000000 65535 f \n"
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode()
+    return bytes(out)
+
+
 class FakeStorage:
     """In-memory Storage protocol implementation for planning/supervisor tests."""
 
