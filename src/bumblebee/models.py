@@ -82,13 +82,19 @@ class TokenUsage:
 
 @dataclass(slots=True, frozen=True)
 class RecognizedRegion:
-    """OCR result for one detected region."""
+    """OCR result for one detected region.
+
+    ``confidence`` is ``exp(mean token logprob)`` in (0, 1] when the OCR
+    request returned logprobs; ``None`` for text-layer/skip regions and when
+    logprobs are disabled.
+    """
 
     region: Region
     content: str | None
     usage: TokenUsage | None = None
     status_code: int | None = None
     latency_ms: int | None = None
+    confidence: float | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -123,11 +129,16 @@ class DocumentInput:
 
 @dataclass(frozen=True, slots=True)
 class OutputPaths:
-    """Output paths for one OCR document."""
+    """Output paths for one OCR document.
+
+    ``chunks`` is set only when chunk emission is enabled; it never counts
+    toward output completeness (older outputs without it stay complete).
+    """
 
     markdown: str
     json: str
     stats: str
+    chunks: str | None = None
 
 
 @dataclass(slots=True)
