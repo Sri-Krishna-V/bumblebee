@@ -29,3 +29,7 @@ examples/input/*.pdf
 bench/
 out/
 glmocr-bench/
+
+# Benchmark harness artifacts (datasets, parses, answers, reports)
+evals/data/
+evals/results/
