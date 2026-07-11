@@ -66,6 +66,17 @@ MaxTokensFormulaOpt = Annotated[int | None, typer.Option(help="Max generated tok
 MaxTokensTableOpt = Annotated[int | None, typer.Option(help="Max generated tokens for tables. [default: 4096]")]
 TemperatureOpt = Annotated[float | None, typer.Option(help="Generation temperature. [default: 0.0]")]
 TopPOpt = Annotated[float | None, typer.Option(help="Generation top_p. [default: 0.00001]")]
+TextLayerOpt = Annotated[
+    str | None,
+    typer.Option(help="Embedded-text hybrid: 'auto' serves text regions from born-digital PDFs, 'off' always OCRs."),
+]
+ChunksOpt = Annotated[
+    bool | None,
+    typer.Option("--chunks/--no-chunks", help="Write RAG-ready chunks.jsonl beside each document. [default: off]"),
+]
+ChunkMaxTokensOpt = Annotated[
+    int | None, typer.Option(help="Approximate token budget per packed text chunk. [default: 512]")
+]
 MaxInflightOpt = Annotated[int | None, typer.Option(help="Documents rendered/cropped concurrently.")]
 OcrConcurrencyOpt = Annotated[
     int | None,
@@ -139,6 +150,9 @@ def build_config(
     max_inflight_pdfs: int | None,
     ocr_request_concurrency: int | None,
     storage_check_workers: int | None,
+    emit_chunks: bool | None = None,
+    chunk_max_tokens: int | None = None,
+    text_layer: str | None = None,
 ) -> OcrConfig:
     """Build the run config shared by both commands; unset flags defer to the environment."""
     return OcrConfig.from_dict(
@@ -156,6 +170,9 @@ def build_config(
             "max_inflight_pdfs": max_inflight_pdfs,
             "ocr_request_concurrency": ocr_request_concurrency,
             "storage_check_workers": storage_check_workers,
+            "emit_chunks": emit_chunks,
+            "chunk_max_tokens": chunk_max_tokens,
+            "text_layer": text_layer,
         }
     )
 
@@ -237,6 +254,9 @@ def run(
     max_inflight_pdfs: MaxInflightOpt = None,
     ocr_request_concurrency: OcrConcurrencyOpt = None,
     storage_check_workers: StorageCheckWorkersOpt = None,
+    chunks: ChunksOpt = None,
+    chunk_max_tokens: ChunkMaxTokensOpt = None,
+    text_layer: TextLayerOpt = None,
     vllm_port: VllmPortOpt = None,
     vllm_health_timeout: VllmHealthTimeoutOpt = None,
     gpu_memory_utilization: GpuMemoryUtilizationOpt = None,
@@ -279,6 +299,9 @@ def run(
         max_inflight_pdfs=max_inflight_pdfs,
         ocr_request_concurrency=ocr_request_concurrency,
         storage_check_workers=storage_check_workers,
+        emit_chunks=chunks,
+        chunk_max_tokens=chunk_max_tokens,
+        text_layer=text_layer,
     )
     engine_config = EngineConfig.from_dict(
         engine_values(
@@ -342,6 +365,9 @@ def modal(
     ] = None,
     ocr_request_concurrency: OcrConcurrencyOpt = None,
     storage_check_workers: StorageCheckWorkersOpt = None,
+    chunks: ChunksOpt = None,
+    chunk_max_tokens: ChunkMaxTokensOpt = None,
+    text_layer: TextLayerOpt = None,
     vllm_port: VllmPortOpt = None,
     vllm_health_timeout: VllmHealthTimeoutOpt = None,
     gpu_memory_utilization: GpuMemoryUtilizationOpt = None,
@@ -405,6 +431,9 @@ def modal(
         max_inflight_pdfs=max_inflight_pdfs,
         ocr_request_concurrency=ocr_request_concurrency,
         storage_check_workers=storage_check_workers,
+        emit_chunks=chunks,
+        chunk_max_tokens=chunk_max_tokens,
+        text_layer=text_layer,
     )
     policy = build_policy(
         batch_docs=batch_docs,

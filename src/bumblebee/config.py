@@ -121,12 +121,32 @@ class OcrConfig:
     # Region crops are JPEG-encoded for vLLM at this quality.
     jpeg_quality: int = env_field("BUMBLEBEE_JPEG_QUALITY", 90, int)
 
+    # Born-digital hybrid: "auto" serves TEXT regions from the PDF's embedded
+    # text layer when a page's layer looks trustworthy (faster and exact);
+    # "off" always OCRs. Tables/formulas always go to the VLM.
+    text_layer: str = env_field("BUMBLEBEE_TEXT_LAYER", "auto", str)
+
+    # Confidence and adaptive retry. ``ocr_logprobs`` asks vLLM for token
+    # logprobs so every region gets a confidence score (exp of the mean token
+    # logprob). ``adaptive_retry`` re-renders and re-OCRs a document's
+    # lowest-confidence regions (below ``confidence_threshold``) once at 2x DPI,
+    # capped at 10% of its OCR regions.
+    ocr_logprobs: bool = env_field("BUMBLEBEE_OCR_LOGPROBS", True, parse_bool)
+    adaptive_retry: bool = env_field("BUMBLEBEE_ADAPTIVE_RETRY", True, parse_bool)
+    confidence_threshold: float = env_field("BUMBLEBEE_CONFIDENCE_THRESHOLD", 0.80, float)
+
     # Generation behavior.
     max_tokens_text: int = env_field("BUMBLEBEE_MAX_TOKENS_TEXT", 2048, int)
     max_tokens_formula: int = env_field("BUMBLEBEE_MAX_TOKENS_FORMULA", 2048, int)
     max_tokens_table: int = env_field("BUMBLEBEE_MAX_TOKENS_TABLE", 4096, int)
     temperature: float = env_field("BUMBLEBEE_TEMPERATURE", 0.0, float)
     top_p: float = env_field("BUMBLEBEE_TOP_P", 0.00001, float)
+
+    # RAG chunk output (bumblebee). ``emit_chunks`` writes a chunks.jsonl beside
+    # each document's markdown; ``chunk_max_tokens`` is the approximate token
+    # budget per packed text chunk.
+    emit_chunks: bool = env_field("BUMBLEBEE_EMIT_CHUNKS", False, parse_bool)
+    chunk_max_tokens: int = env_field("BUMBLEBEE_CHUNK_MAX_TOKENS", 512, int)
 
     # Concurrency. ``max_inflight_pdfs`` bounds how many documents are rendered,
     # laid out, and cropped at once. ``ocr_request_concurrency`` bounds how many
@@ -148,6 +168,12 @@ class OcrConfig:
             raise ValueError("max_tokens_text/formula/table must all be >= 1")
         if self.pdf_dpi < 1:
             raise ValueError(f"pdf_dpi must be >= 1, got {self.pdf_dpi}")
+        if self.chunk_max_tokens < 1:
+            raise ValueError(f"chunk_max_tokens must be >= 1, got {self.chunk_max_tokens}")
+        if self.text_layer not in ("auto", "off"):
+            raise ValueError(f"text_layer must be 'auto' or 'off', got {self.text_layer!r}")
+        if not 0.0 < self.confidence_threshold <= 1.0:
+            raise ValueError(f"confidence_threshold must be in (0, 1], got {self.confidence_threshold}")
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> Self:
