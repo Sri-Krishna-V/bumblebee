@@ -259,10 +259,14 @@ class DocumentEngine:
         write_tasks: list[asyncio.Task[None]] = []
 
         async def persist(processed: ProcessedDoc) -> None:
-            paths = output_paths_for_document(target_storage, target, processed.document)
+            paths = output_paths_for_document(
+                target_storage, target, processed.document, emit_chunks=config.emit_chunks
+            )
             stamp_output_paths(processed.stats, paths)
             if write:
-                await asyncio.to_thread(write_outputs, target_storage, processed, paths)
+                await asyncio.to_thread(
+                    write_outputs, target_storage, processed, paths, chunk_max_tokens=config.chunk_max_tokens
+                )
             if return_payloads:
                 payloads.append(document_payload(processed))
             stats.append(processed.stats)

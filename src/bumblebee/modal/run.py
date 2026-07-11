@@ -24,6 +24,7 @@ from typing import Any, cast
 from urllib.parse import urlparse
 
 from bumblebee.batches import BatchPolicy, DocumentBatch, batch_summary, summary_results, supervise_batches
+from bumblebee.chunks import build_chunks, chunks_to_jsonl
 from bumblebee.config import OcrConfig
 from bumblebee.logging import configure_logging
 from bumblebee.modal.app import app
@@ -118,7 +119,7 @@ async def _supervise_locally(
         if target_is_local:
             if target_storage is None:
                 raise RuntimeError("target_storage is required for local-target batches")
-            return summary, _write_local_outputs(target_storage, target, response)
+            return summary, _write_local_outputs(target_storage, target, response, config)
         return summary, summary_results(summary)
 
     run_target: _LocalRunTarget | RunTarget
@@ -210,22 +211,33 @@ def _select_active(
     return active, counts
 
 
-def _write_local_outputs(storage: Storage, target: str, response: dict[str, Any]) -> list[dict[str, Any]]:
+def _write_local_outputs(
+    storage: Storage, target: str, response: dict[str, Any], config: OcrConfig
+) -> list[dict[str, Any]]:
     """Write worker-returned outputs to the local target and return their stats."""
     stats: list[dict[str, Any]] = []
     for entry in response.get("documents", []):
         if not isinstance(entry, dict):
             continue
         stem = _entry_output_stem(entry)
-        output_paths = output_paths_for_stem(storage, target, stem)
+        output_paths = output_paths_for_stem(storage, target, stem, emit_chunks=config.emit_chunks)
         doc_stats = entry.get("stats")
         if not isinstance(doc_stats, dict):
             continue
         written = dict(doc_stats)
         write_started = time.perf_counter()
         if written.get("status") == "succeeded":
+            layout_json = entry.get("json") or []
             storage.write_text(output_paths.markdown, str(entry.get("markdown") or ""))
-            storage.write_json(output_paths.json, sanitize_layout_json(entry.get("json") or []))
+            storage.write_json(output_paths.json, sanitize_layout_json(layout_json))
+            if output_paths.chunks is not None:
+                chunks = build_chunks(
+                    layout_json,
+                    doc_path=str(entry.get("relative_path") or stem),
+                    output_stem=stem,
+                    max_tokens=config.chunk_max_tokens,
+                )
+                storage.write_text(output_paths.chunks, chunks_to_jsonl(chunks))
         add_write_duration(written, time.perf_counter() - write_started)
         stamp_output_paths(written, output_paths)
         storage.write_json(output_paths.stats, written)

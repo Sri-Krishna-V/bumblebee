@@ -12,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, cast
 
+from bumblebee.chunks import DEFAULT_CHUNK_MAX_TOKENS, build_chunks, chunks_to_jsonl
 from bumblebee.config import OcrConfig
 from bumblebee.models import DocumentInput, OutputPaths, ProcessedDoc
 from bumblebee.stats import add_write_duration, build_failed_stats, sanitize_layout_json
@@ -24,37 +25,57 @@ def output_paths_for_document(
     storage: Storage,
     target: str,
     document: DocumentInput,
+    *,
+    emit_chunks: bool = False,
 ) -> OutputPaths:
     """Return the expected output paths for one document."""
-    return output_paths_for_stem(storage, target, document.output_stem)
+    return output_paths_for_stem(storage, target, document.output_stem, emit_chunks=emit_chunks)
 
 
-def output_paths_for_stem(storage: Storage, target: str, output_stem: str) -> OutputPaths:
+def output_paths_for_stem(storage: Storage, target: str, output_stem: str, *, emit_chunks: bool = False) -> OutputPaths:
     """Return output paths below one directory named after the document stem."""
     document_dir = storage.join(target, normalize_relative_path(output_stem) or "document")
     return OutputPaths(
         markdown=storage.join(document_dir, "content.md"),
         json=storage.join(document_dir, "layout.json"),
         stats=storage.join(document_dir, "stats.json"),
+        chunks=storage.join(document_dir, "chunks.jsonl") if emit_chunks else None,
     )
 
 
 def stamp_output_paths(stats: dict[str, Any], paths: OutputPaths) -> None:
     """Record a document's output paths in its stats (for humans reading stats.json)."""
     stats["output"] = {"markdown": paths.markdown, "json": paths.json, "stats": paths.stats}
+    if paths.chunks is not None:
+        stats["output"]["chunks"] = paths.chunks
 
 
-def write_outputs(storage: Storage, processed: ProcessedDoc, paths: OutputPaths) -> None:
+def write_outputs(
+    storage: Storage,
+    processed: ProcessedDoc,
+    paths: OutputPaths,
+    *,
+    chunk_max_tokens: int = DEFAULT_CHUNK_MAX_TOKENS,
+) -> None:
     """Persist one processed document, writing stats last as the completion marker.
 
     Output-write time is folded into the document's stats before the stats file
-    (the completion marker) is written.
+    (the completion marker) is written. Chunks are written only when
+    ``paths.chunks`` is set (chunk emission enabled).
     """
     started = time.perf_counter()
     result = processed.result
     if result is not None:
         storage.write_text(paths.markdown, result.markdown)
         storage.write_json(paths.json, sanitize_layout_json(result.json))
+        if paths.chunks is not None:
+            chunks = build_chunks(
+                result.json,
+                doc_path=processed.document.relative_path,
+                output_stem=processed.document.output_stem,
+                max_tokens=chunk_max_tokens,
+            )
+            storage.write_text(paths.chunks, chunks_to_jsonl(chunks))
     add_write_duration(processed.stats, time.perf_counter() - started)
     storage.write_json(paths.stats, processed.stats)
 
