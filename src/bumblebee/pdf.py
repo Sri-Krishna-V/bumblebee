@@ -16,17 +16,17 @@ into layout and OCR while later pages of the same document still render.
 import asyncio
 import importlib
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from bumblebee.config import OcrConfig
-from bumblebee.models import Page, StageTiming
+from bumblebee.models import Page, Region, StageTiming
 
 
 def pdf_page_count(pdf_bytes: bytes) -> int:
     """Return the number of pages in one PDF document."""
-    pdfium = _pdfium_module()
+    pdfium = pdfium_module()
     pdf = pdfium.PdfDocument(pdf_bytes)
     try:
         return len(pdf)
@@ -80,12 +80,22 @@ class RenderEngine:
 
         return await loop.run_in_executor(self._executor, _render)
 
+    async def extract_region_texts(
+        self, pdf_bytes: bytes, regions_by_page: Mapping[int, Sequence[Region]]
+    ) -> dict[int, list[str]]:
+        """Extract embedded text per region on the dedicated render thread (PDFium is not thread-safe)."""
+        from bumblebee.textlayer import extract_region_texts
+
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._executor, extract_region_texts, pdf_bytes, regions_by_page)
+
     def close(self) -> None:
         """Shut down the render worker thread."""
         self._executor.shutdown(wait=False)
 
 
-def _pdfium_module() -> Any:
+def pdfium_module() -> Any:
+    """Import pypdfium2 lazily (shared by rendering and text-layer extraction)."""
     try:
         return importlib.import_module("pypdfium2")
     except ModuleNotFoundError as exc:  # pragma: no cover - dependency error path.
@@ -98,7 +108,7 @@ def _render_pdf_pages_pdfium(
     max_width_or_height: int,
     page_indices: Sequence[int] | None,
 ) -> list[Page]:
-    pdfium = _pdfium_module()
+    pdfium = pdfium_module()
     pdf = pdfium.PdfDocument(pdf_bytes)
     pages: list[Page] = []
     try:
