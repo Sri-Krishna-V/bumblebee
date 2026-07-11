@@ -500,6 +500,8 @@ def _region_to_original_dict(recognized: RecognizedRegion) -> dict[str, Any]:
         result["_ocr_latency_ms"] = recognized.latency_ms
     if recognized.usage is not None:
         result["_ocr_usage"] = asdict(recognized.usage)
+    if recognized.confidence is not None:
+        result["_ocr_confidence"] = round(recognized.confidence, 4)
     return result
 
 
