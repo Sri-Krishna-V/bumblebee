@@ -1,4 +1,9 @@
-# bumblebee
+# bumblebee (built on bumblebee)
+
+**bumblebee** is a RAG-ingestion product on the bumblebee engine: PDF buckets in, layout-aware
+markdown + RAG-ready `chunks.jsonl` out — via CLI or a hosted API. The `bumblebee` command is
+the same CLI as `bumblebee` with chunk emission on by default; see
+[Bumblebee: RAG ingestion](#bumblebee-rag-ingestion) below.
 
 `bumblebee` was born from the need to OCR a large corpus of PDF documents with complex layouts quickly and at low cost. It converts PDF documents to markdown and json, including documents with complex layouts and tables. It uses  `pp-doclayout-v3` for layout detection and GLM-OCR to recognize text. We measured throughput at more than 14 pages per second on our benchmark. For other datasets, we reached up to 20 pages per second. It runs on a single L40S GPU (or similar).
 
@@ -28,6 +33,66 @@ We use 100 PDF documents from the [European Medicines Agency](https://www.ema.eu
 | One-line deployment | Runs the full pipeline on Modal with a single CLI command. |
 | Bare-metal deployment | Runs on any machine with an NVIDIA GPU. |
 
+
+## Bumblebee: RAG ingestion
+
+The `bumblebee` console script runs the same commands as `bumblebee`, with chunk emission on
+by default: every document gets a `chunks.jsonl` beside its markdown, ready to load into any
+vector store or search index.
+
+```bash
+bumblebee --source ./input --target ./output          # local GPU
+bumblebee modal --source s3://in --target s3://out    # Modal
+bumblebee --chunks --source ./input --target ./output # same thing, explicit flag
+```
+
+Each line of `chunks.jsonl` is one retrieval chunk:
+
+```json
+{"chunk_id": "report#0007", "doc": "report.pdf", "section_path": ["Annual Report", "4. Risk Factors"],
+ "pages": [12], "bboxes": [{"page": 12, "bbox": [112, 340, 890, 610]}],
+ "kind": "text", "text": "...", "token_estimate": 412}
+```
+
+Chunking is structure-aware: consecutive text regions pack up to `--chunk-max-tokens` and never
+cross heading boundaries, headings feed `section_path`, tables and formulas stay atomic
+(`kind: "table" | "formula"`), and every chunk carries page numbers + bounding boxes so a RAG
+answer can highlight its exact source on the original page.
+
+### Hosted API
+
+Deploy a persistent parse endpoint on Modal (one GPU container, bearer-token auth):
+
+```bash
+modal secret create bumblebee-api BUMBLEBEE_API_KEY=<token>
+bumblebee deploy-api
+
+curl -X POST "https://<your-modal-url>/v1/parse?filename=report.pdf" \
+  -H "Authorization: Bearer <token>" \
+  --data-binary @report.pdf
+```
+
+The response carries `markdown`, `layout`, `chunks`, and `stats` (`?chunks=false` to skip
+chunking). Cost note: the API container scales down after 120s idle
+(`BUMBLEBEE_API_SCALEDOWN_SECONDS`); a warm GPU costs ~$2/hour and a cold start takes minutes
+(model load), so warm it up before a live demo.
+
+### Accuracy features
+
+- **Born-digital text layer** (`--text-layer auto`, default): text regions on pages with a
+  trustworthy embedded text layer are read directly from the PDF — exact and GPU-free; tables
+  and formulas always go to the VLM. `off` disables.
+- **Confidence scores** (`BUMBLEBEE_OCR_LOGPROBS`, default on): every OCR region gets
+  `exp(mean token logprob)`; per-document min/mean and a low-confidence count land in
+  `stats.json` under `ocr_requests.confidence`.
+- **Adaptive retry** (`BUMBLEBEE_ADAPTIVE_RETRY`, default on): a document's lowest-confidence
+  regions (below `BUMBLEBEE_CONFIDENCE_THRESHOLD`, default 0.80; at most 10% of its regions)
+  are re-rendered at 2x DPI and re-OCRed once, keeping the better result.
+
+### Benchmark harness
+
+`evals/` holds the DocVQA parse-then-QA benchmark harness (accuracy + throughput + $/1k pages
+in one report). See [evals/README.md](evals/README.md).
 
 ## Use on Modal (easiest, no local GPU required)
 
@@ -123,6 +188,7 @@ the relative stem in the target:
 - `foo/content.md` — GLM-OCR-formatted Markdown
 - `foo/layout.json` — per-page region JSON
 - `foo/stats.json` — per-document timings, token usage, region counts and completion marker
+- `foo/chunks.jsonl` — RAG-ready chunks (only with `--chunks` / the `bumblebee` CLI)
 
 A run-level `_run_summary.json` is written too, with document/page/token totals,
 throughput, and per-batch status.
@@ -161,9 +227,16 @@ The tables below list every operational flag on `bumblebee` and
 | `--max-tokens-table` | `4096` | Maximum generated tokens for table regions. |
 | `--temperature` | `0.0` | OCR generation temperature. |
 | `--top-p` | `0.00001` | OCR generation nucleus-sampling `top_p`. |
+| `--chunks/--no-chunks` | off (`bumblebee`: on) | Write RAG-ready `chunks.jsonl` beside each document. |
+| `--chunk-max-tokens` | `512` | Approximate token budget per packed text chunk. |
+| `--text-layer` | `auto` | Serve text regions from born-digital PDFs' embedded text (`auto`) or always OCR (`off`). |
 | `--max-inflight-pdfs` | `16` local, `32` on Modal | Documents rendered, laid out, and cropped concurrently. Modal uses 32 only when neither flag nor env var is set. |
 | `--ocr-request-concurrency` | `1024` | Concurrent OCR requests to the vLLM server; keep near `--max-num-seqs`. |
 | `--storage-check-workers` | `64` | Threads reading completion markers when resuming against cloud targets. |
+
+Environment-only run settings (no CLI flag): `BUMBLEBEE_OCR_LOGPROBS` (default `1`; per-region
+confidence scores), `BUMBLEBEE_ADAPTIVE_RETRY` (default `1`; re-OCR low-confidence regions at
+2x DPI), `BUMBLEBEE_CONFIDENCE_THRESHOLD` (default `0.80`).
 
 **Engine settings** (`EngineConfig`, both commands; startup-scoped):
 
