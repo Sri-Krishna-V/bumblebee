@@ -67,7 +67,16 @@ gcs = [
 ]
 
 [dependency-groups]
+# Benchmark harness (evals/): dataset download + OpenRouter QA client.
+evals = [
+    "datasets>=3.2.0",
+    "httpx>=0.27.0",
+]
 dev = [
+    # fastapi/httpx are dev-only: the hosted API module is exercised in tests
+    # with a fake engine; production installs get fastapi via the Modal image.
+    "fastapi>=0.115.0",
+    "httpx>=0.27.0",
     "pyright>=1.1.410",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.25.0",
@@ -76,6 +85,7 @@ dev = [
 
 [project.scripts]
 bumblebee = "bumblebee.cli:main"
+bumblebee = "bumblebee.bumblebee:main"
 
 [project.urls]
 Documentation = "https://github.com/Sri-Krishna-V/bumblebee#readme"
@@ -85,6 +95,16 @@ Repository = "https://github.com/Sri-Krishna-V/bumblebee"
 module-name = "bumblebee"
 module-root = "src"
 
+# The evals group's `datasets` caps fsspec below what the cloud-storage extras
+# need; they are never installed together (evals prep is local), so declare the
+# conflict instead of downgrading the storage stack.
+[tool.uv]
+conflicts = [
+    [{ group = "evals" }, { extra = "azure" }],
+    [{ group = "evals" }, { extra = "s3" }],
+    [{ group = "evals" }, { extra = "gcs" }],
+]
+
 # TensorRT/CUDA wheels used by the GPU extras live on NVIDIA's package index.
 [[tool.uv.index]]
 name = "nvidia"
@@ -93,7 +113,7 @@ url = "https://pypi.nvidia.com/"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py", "evals/**/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -122,6 +142,7 @@ isort = { combine-as-imports = true, known-first-party = ["bumblebee"] }
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]
+"evals/**" = ["D"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Always import via the full package path (e.g. `from bumblebee.config import ...`)
