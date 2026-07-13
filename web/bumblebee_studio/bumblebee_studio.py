@@ -63,9 +63,18 @@ def hive_field() -> rx.Component:
 # ── Hero ─────────────────────────────────────────────────────────
 
 
+def marquee() -> rx.Component:
+    items = ["markdown", "✦", "layout json", "✦", "rag chunks", "✦", "section paths", "✦",
+             "bounding boxes", "✦", "hybrid ocr", "✦", "one gpu", "✦", "one call", "✦"]
+    row = [rx.text(t, class_name="tick" if t == "✦" else "") for t in items]
+    row2 = [rx.text(t, class_name="tick" if t == "✦" else "") for t in items]
+    return rx.box(rx.box(*row, *row2, class_name="marquee-inner"), class_name="marquee", aria_hidden="true")
+
+
 def hero() -> rx.Component:
     return rx.el.header(
         hive_field(),
+        rx.box(rx.el.span("🐝", class_name="bee-body"), class_name="bee", aria_hidden="true"),
         rx.box(
             rx.text("Bumblebee · Document Intelligence", class_name="eyebrow rise rise-1"),
             rx.el.h1(
@@ -227,7 +236,7 @@ def studio() -> rx.Component:
             rx.text("Studio", class_name="eyebrow"),
             rx.el.h2("Drop a PDF. Watch the hive work.", class_name="section-title"),
             rx.box(engine_pill()),
-            class_name="section-head",
+            class_name="section-head reveal",
         ),
         rx.box(
             rx.match(
@@ -237,7 +246,7 @@ def studio() -> rx.Component:
                 ("done", results_view()),
                 dropzone(),
             ),
-            class_name="studio-card",
+            class_name="studio-card reveal",
         ),
         class_name="section",
         id="studio",
@@ -252,7 +261,7 @@ def pipe_card(step: str, title: str, body: str) -> rx.Component:
         rx.text(step, class_name="pipe-step"),
         rx.el.h3(title, class_name="pipe-title"),
         rx.text(body, class_name="pipe-body"),
-        class_name="pipe-card",
+        class_name="pipe-card reveal",
     )
 
 
@@ -267,7 +276,7 @@ def pipeline() -> rx.Component:
                 "regions that need it.",
                 class_name="section-sub",
             ),
-            class_name="section-head",
+            class_name="section-head reveal",
         ),
         rx.box(
             pipe_card(
@@ -314,9 +323,9 @@ def api_section() -> rx.Component:
                 "required, no second request for chunks.",
                 class_name="section-sub",
             ),
-            class_name="section-head",
+            class_name="section-head reveal",
         ),
-        rx.el.pre(CURL, class_name="code-block"),
+        rx.el.pre(CURL, class_name="code-block reveal"),
         class_name="section",
         id="api",
     )
@@ -337,8 +346,43 @@ def footer() -> rx.Component:
 # ── Page + app ───────────────────────────────────────────────────
 
 
+INTERACTIONS_JS = """
+document.addEventListener('pointermove', (e) => {
+  const root = document.documentElement.style;
+  root.setProperty('--mx', e.clientX + 'px');
+  root.setProperty('--my', e.clientY + 'px');
+  const hive = document.querySelector('.hive');
+  if (hive) {
+    hive.style.translate =
+      ((e.clientX - innerWidth / 2) / 38) + 'px ' + ((e.clientY - innerHeight / 2) / 38) + 'px';
+  }
+}, { passive: true });
+
+const io = new IntersectionObserver(
+  (entries) => entries.forEach((en) => en.isIntersecting && en.target.classList.add('in-view')),
+  { threshold: 0.15 }
+);
+setInterval(() => {
+  document.querySelectorAll('.reveal:not([data-obs])').forEach((el) => {
+    el.setAttribute('data-obs', '1');
+    io.observe(el);
+  });
+}, 600);
+"""
+
+
 def index() -> rx.Component:
-    return rx.box(nav(), hero(), studio(), pipeline(), api_section(), footer())
+    return rx.box(
+        rx.box(class_name="spotlight", aria_hidden="true"),
+        nav(),
+        hero(),
+        marquee(),
+        studio(),
+        pipeline(),
+        api_section(),
+        footer(),
+        rx.script(INTERACTIONS_JS),
+    )
 
 
 app = rx.App(
