@@ -82,6 +82,9 @@ dev = [
     "pytest-asyncio>=0.25.0",
     "ruff>=0.15.17",
 ]
+web = [
+    "reflex>=0.9.6.post1",
+]
 
 [project.scripts]
 bumblebee = "bumblebee.cli:main"
