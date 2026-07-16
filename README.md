@@ -21,7 +21,6 @@ We use 100 PDF documents from the [European Medicines Agency](https://www.ema.eu
 | Output tokens/sec | 4,316 | 11,801 |
 | Page regions/sec | 75 | 205.4 |
 
-
 ## Features
 
 | Feature | Description |
@@ -32,7 +31,6 @@ We use 100 PDF documents from the [European Medicines Agency](https://www.ema.eu
 | OCR from cloud storage | Processes PDFs from and writes outputs to S3 buckets, Azure storage containers, or Google Cloud buckets. |
 | One-line deployment | Runs the full pipeline on Modal with a single CLI command. |
 | Bare-metal deployment | Runs on any machine with an NVIDIA GPU. |
-
 
 ## Bumblebee: RAG ingestion
 
@@ -282,7 +280,6 @@ confidence scores), `BUMBLEBEE_ADAPTIVE_RETRY` (default `1`; re-OCR low-confiden
 | `--timeout` | `21600` | Modal call timeout in seconds. |
 | `--max-containers` | `1` | Maximum Modal GPU containers. |
 | `--modal-secrets` | none | Comma-separated Modal secret names mounted into workers (`BUMBLEBEE_MODAL_SECRET_NAMES`). |
-
 
 ## Development
 

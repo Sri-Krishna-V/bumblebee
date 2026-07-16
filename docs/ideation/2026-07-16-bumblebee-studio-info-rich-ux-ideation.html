@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideation: Information-Rich UX for Bumblebee Studio</title>
+<style>
+:root{
+  --bg:#fffdf7; --ink:#2a2418; --muted:#6b6353; --line:#e8e0cc;
+  --honey:#b07d10; --honey-soft:#fdf3d7; --honey-text:#8a6008;
+  --ok:#2e7d32; --ok-soft:#e8f3e9; --warn:#b3541e; --warn-soft:#fbeee4;
+  --info:#1e5fb3; --info-soft:#e8f0fb; --card:#ffffff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+.page{max-width:900px;margin-inline:auto;padding:2.5rem 1.5rem 4rem}
+p,li,dd{max-width:70ch}
+h1{font-size:1.7rem;line-height:1.25;margin:.2rem 0 .4rem}
+h2{font-size:1.25rem;margin:2.6rem 0 .8rem;padding-bottom:.3rem;border-bottom:2px solid var(--line)}
+h3{font-size:1.05rem;margin:0}
+code{background:#f4efe2;border:1px solid var(--line);border-radius:4px;padding:.05em .35em;
+  font:.85em/1.4 Consolas,"Cascadia Mono",monospace}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--honey-text);font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:.4rem .6rem;margin:.6rem 0 0;padding:0;list-style:none}
+.meta li{background:var(--honey-soft);color:var(--honey-text);border-radius:999px;
+  padding:.15rem .7rem;font-size:.8rem;font-weight:600}
+.stats{display:flex;flex-wrap:wrap;gap:.8rem;margin:1.4rem 0 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;min-width:7.5rem}
+.stat b{display:block;font-size:1.3rem;color:var(--honey)}
+.stat span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.jump{background:var(--card);border:1px solid var(--line);border-radius:10px;padding: .9rem 1.2rem;margin:1rem 0 1.6rem}
+.jump ol{margin:.3rem 0 0;padding-left:1.3rem}
+.jump a{color:var(--honey-text);text-decoration:none;font-weight:600}
+.jump a:hover{text-decoration:underline}
+article.idea{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:1.3rem 1.5rem;margin:0 0 1.6rem}
+.idea header{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.6rem}
+.idchip{background:var(--honey);color:#fff;border-radius:999px;font-weight:700;
+  font-size:.85rem;padding:.1rem .65rem;flex:none}
+.chips{display:flex;gap:.45rem;flex-wrap:wrap;margin-left:auto}
+.chip{border-radius:999px;font-size:.74rem;font-weight:600;padding:.12rem .6rem}
+.chip.axis{background:var(--info-soft);color:var(--info)}
+.chip.conf{background:var(--ok-soft);color:var(--ok)}
+.chip.conf.med{background:var(--warn-soft);color:var(--warn)}
+.chip.cx{background:#f0ece0;color:var(--muted)}
+.idea dl{margin:.8rem 0 0}
+.idea dt{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--honey-text);
+  font-weight:700;margin-top:.9rem}
+.idea dd{margin:.25rem 0 0}
+figure{margin:1.2rem 0 .4rem;padding:1rem;background:#fcfaf3;border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+figcaption{font-size:.78rem;color:var(--muted);margin-top:.5rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:.5rem .7rem;text-align:left;vertical-align:top}
+th{background:var(--honey-soft);color:var(--honey-text);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+footer.composition-signal{margin-top:3.5rem;padding-top:1rem;border-top:1px solid var(--line);
+  font-size:.78rem;color:var(--muted)}
+svg text{font-family:"Segoe UI",system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="page">
+
+<span class="eyebrow">Ideation · repo-grounded</span>
+<h1>Information-Rich UX for Bumblebee Studio</h1>
+<ul class="meta">
+  <li>date: 2026-07-16</li>
+  <li>topic: bumblebee-studio-info-rich-ux</li>
+  <li>focus: top 5 new UX features that give users as much information as possible</li>
+  <li>mode: repo-grounded</li>
+</ul>
+<div class="stats">
+  <div class="stat"><b>42</b><span>raw ideas</span></div>
+  <div class="stat"><b>5</b><span>survivors</span></div>
+  <div class="stat"><b>5</b><span>axes covered</span></div>
+  <div class="stat"><b>6</b><span>ideation frames</span></div>
+  <div class="stat"><b>9</b><span>rejected clusters</span></div>
+</div>
+
+<h2 id="grounding-context">Grounding Context</h2>
+<p><strong>Codebase Context.</strong> Bumblebee Studio is the Reflex web frontend
+(<code>web/bumblebee_studio/</code>) over the <code>bumblebee</code> Python pipeline
+(<code>src/bumblebee/</code>). Today the studio shows: a drag-drop PDF upload, a static
+"layout → OCR → chunks" spinner, and results as two tabs — Chunks (kind, section breadcrumb,
+pages, token estimate, text truncated at 1,200 chars) and Markdown (80k-char preview) — plus a
+five-tile stats row (pages, regions, OCR regions, chunks, parse time).</p>
+<p>The central finding: <strong>the pipeline already computes far more information than the UI
+shows, and most of it is dropped at exactly one or two seams.</strong> Per-region OCR confidence
+(0–1 from token logprobs) is stripped by <code>sanitize_layout_json()</code>
+(<code>src/bumblebee/stats.py:19</code>) one call before the API responds. Normalized 0–1000
+bounding boxes ship to the client inside every chunk record and are never rendered. A 7-stage
+timing model with queue/exec splits (<code>DocumentTimings</code>), per-region latency and token
+counts, adaptive-retry bookkeeping (regions below 0.80 confidence re-OCR'd at 2× DPI), and a
+25-class layout-label vocabulary all exist server-side and reach no user.</p>
+<p><strong>External context.</strong> Best-in-class tools converge on the same patterns: per-word/
+per-block confidence with threshold routing (Azure Document Intelligence, AWS Textract's three-tier
+auto-pass / spot-check / manual review), paragraph-level boxes with typed blocks (Mistral OCR 4),
+hover-synced source↔output panes with a live cost footer (the run-llama "baby-llamaParse"
+playground reference), and toggle-on confidence heatmaps (Sonix transcripts). Recurring
+practitioner complaint: document-level confidence is misleading because failures are local.</p>
+<p><strong>Product context.</strong> Solo developer, faculty-demo goal, $30 Modal compute budget,
+private-until-benchmarks. Ideas were weighted toward high information density per unit of
+engineering cost, and away from backend rearchitecture.</p>
+
+<h2 id="topic-axes">Topic Axes</h2>
+<ol>
+  <li><strong>confidence-quality</strong> — surfacing parse quality and confidence to users</li>
+  <li><strong>spatial-view</strong> — bounding boxes, page overlays, region↔chunk linking</li>
+  <li><strong>pipeline-transparency</strong> — timing, engine metadata, tokens and cost</li>
+  <li><strong>chunk-structure</strong> — chunk and document-structure exploration, search, export</li>
+  <li><strong>upload-progress</strong> — upload flow and in-progress feedback</li>
+</ol>
+
+<h2 id="ranked-ideas">Ranked Ideas</h2>
+<div class="jump">
+  <span class="eyebrow">Jump to</span>
+  <ol>
+    <li><a href="#idea1">Trust Lens — confidence heatmap + review queue</a></li>
+    <li><a href="#idea2">Ghost Overlay — client-side page view with hover-synced regions</a></li>
+    <li><a href="#idea3">Parse Forensics — timing waterfall + cost receipt</a></li>
+    <li><a href="#idea4">Chunk Workbench — search, filters, section tree, re-chunk slider</a></li>
+    <li><a href="#idea5">Instant Draft — race the engines + honest stage board</a></li>
+  </ol>
+</div>
+
+<article class="idea" id="idea1">
+  <header>
+    <span class="idchip">1</span>
+    <h3>Trust Lens — confidence heatmap + review queue</h3>
+    <span class="chips">
+      <span class="chip axis">confidence-quality</span>
+      <span class="chip conf">Conf 90%</span>
+      <span class="chip cx">Cx Medium</span>
+    </span>
+  </header>
+  <dl>
+    <dt>Description</dt>
+    <dd>Stop stripping <code>_ocr_confidence</code> at the API boundary (opt-in flag or default),
+    then make quality visible in two layers: a <em>heatmap toggle</em> that tints each chunk card
+    (and eventually each markdown block) by confidence, and a <em>review queue</em> — a filterable
+    "needs review" list of regions that fell below the existing 0.80 threshold, annotated with the
+    adaptive-retry story the pipeline already lives ("23 regions OCR'd · 3 flagged · re-OCR'd at
+    2× DPI · 2 improved 0.71 → 0.94"). Tier badges follow the industry-standard three-tier routing:
+    auto-pass / spot-check / review.</dd>
+    <dt>Basis</dt>
+    <dd><code>direct:</code> <code>src/bumblebee/stats.py:19</code> —
+    <code>PRIVATE_JSON_KEYS = frozenset({"_ocr_usage", "_ocr_latency_ms", "_ocr_status_code",
+    "_ocr_confidence"})</code>, applied via <code>sanitize_layout_json()</code> at the single
+    <code>api.py</code> call site; confidence is computed to 4 decimals
+    (<code>format.py:503-504</code>) and deleted one function later. Retry mechanics at
+    <code>pipeline.py:305-354</code>; min/mean/low aggregates at <code>pipeline.py:523-533</code>.
+    <code>external:</code> Azure Document Intelligence / AWS Textract three-tier confidence
+    routing; Sonix word-confidence heatmap toggle.</dd>
+    <dt>Rationale</dt>
+    <dd>This is the single richest signal the pipeline produces and it currently reaches zero
+    users — every chunk looks equally authoritative. Practitioners consistently report that
+    doc-level confidence hides local failures; a per-region lens answers "which parts do I
+    double-check before citing this" at a glance. The adaptive retry is the most sophisticated
+    thing the pipeline does and it is 100% invisible — showing the system noticing and fixing its
+    own weak spots is a stronger trust story than claiming accuracy. Four of five ideation frames
+    independently converged here.</dd>
+    <dt>Downsides</dt>
+    <dd>Making confidence public is a schema decision worth making deliberately (it becomes part
+    of the API surface). Confidence must be threaded into chunk records (chunks don't carry it
+    today), and coloring the markdown tab is costlier than coloring chunk cards because markdown
+    renders as one blob. Confidence exists only for OCR'd regions — text-layer regions and demo
+    mode show nothing, which the UI must communicate honestly.</dd>
+  </dl>
+  <figure>
+    <svg viewBox="0 0 660 170" width="660" height="170" role="img" aria-label="Confidence flows from pipeline but is stripped before the UI; the idea reroutes it into tier badges">
+      <rect x="10" y="20" width="130" height="44" rx="8" fill="#fdf3d7" stroke="#b07d10"/>
+      <text x="75" y="38" text-anchor="middle" font-size="12" font-weight="600" fill="#5c430e">OCR region</text>
+      <text x="75" y="54" text-anchor="middle" font-size="11" fill="#8a6008">confidence 0.87</text>
+      <rect x="220" y="20" width="170" height="44" rx="8" fill="#fbeee4" stroke="#b3541e"/>
+      <text x="305" y="38" text-anchor="middle" font-size="12" font-weight="600" fill="#7c3a13">sanitize_layout_json()</text>
+      <text x="305" y="54" text-anchor="middle" font-size="11" fill="#b3541e">strips _ocr_confidence</text>
+      <rect x="470" y="20" width="130" height="44" rx="8" fill="#f0ece0" stroke="#a89f8a"/>
+      <text x="535" y="38" text-anchor="middle" font-size="12" font-weight="600" fill="#6b6353">Studio today</text>
+      <text x="535" y="54" text-anchor="middle" font-size="11" fill="#6b6353">no quality signal</text>
+      <line x1="140" y1="42" x2="214" y2="42" stroke="#a89f8a" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="390" y1="42" x2="464" y2="42" stroke="#a89f8a" stroke-width="1.5" marker-end="url(#arr)"/>
+      <path d="M 305 64 L 305 108 L 100 108" fill="none" stroke="#2e7d32" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrg)"/>
+      <text x="330" y="96" font-size="11" font-weight="600" fill="#2e7d32">idea: let it through, route by tier</text>
+      <rect x="10" y="122" width="120" height="34" rx="17" fill="#e8f3e9" stroke="#2e7d32"/>
+      <text x="70" y="143" text-anchor="middle" font-size="11.5" font-weight="600" fill="#2e7d32">auto-pass ≥ 0.9</text>
+      <rect x="145" y="122" width="130" height="34" rx="17" fill="#fdf3d7" stroke="#b07d10"/>
+      <text x="210" y="143" text-anchor="middle" font-size="11.5" font-weight="600" fill="#8a6008">spot-check 0.8–0.9</text>
+      <rect x="290" y="122" width="140" height="34" rx="17" fill="#fbeee4" stroke="#b3541e"/>
+      <text x="360" y="143" text-anchor="middle" font-size="11.5" font-weight="600" fill="#b3541e">review &lt; 0.8 (retried)</text>
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#a89f8a"/></marker>
+        <marker id="arrg" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2e7d32"/></marker>
+      </defs>
+    </svg>
+    <figcaption>Confidence is computed per region and deleted at one seam; the idea reroutes it
+    into three visible trust tiers. Illustrative, not a spec.</figcaption>
+  </figure>
+</article>
+
+<article class="idea" id="idea2">
+  <header>
+    <span class="idchip">2</span>
+    <h3>Ghost Overlay — client-side page view with hover-synced regions</h3>
+    <span class="chips">
+      <span class="chip axis">spatial-view</span>
+      <span class="chip conf">Conf 85%</span>
+      <span class="chip cx">Cx Medium</span>
+    </span>
+  </header>
+  <dl>
+    <dt>Description</dt>
+    <dd>A two-pane results view: the document pages on the left, chunks/markdown on the right.
+    The twist that makes it affordable: render the PDF <em>client-side</em> (PDF.js) from the file
+    the browser already uploaded, and draw the normalized 0–1000 bounding boxes — which every
+    chunk record already carries to the client — as toggleable overlay layers colored by region
+    label (title / paragraph / table / formula). Hovering a chunk highlights its source region;
+    clicking a region jumps to its chunk. Zero server cost, zero pipeline change, no Modal
+    spend.</dd>
+    <dt>Basis</dt>
+    <dd><code>direct:</code> <code>src/bumblebee/chunks.py:75-87</code> — every chunk carries
+    <code>"bboxes": [{"page": int, "bbox": [x1, y1, x2, y2]}]</code> (normalized 0–1000 ints),
+    shipped in the JSONL the client already holds and never rendered; page images are closed
+    immediately after cropping (<code>pipeline.py:203-204</code>), so the server retains nothing —
+    but the verifier confirmed the uploaded PDF is saved and available
+    (<code>web/bumblebee_studio/state.py:121-124</code>). <code>external:</code> hover-synced
+    source↔output panes are the headline interaction of the run-llama "baby-llamaParse"
+    playground reference and the PDF-annotation click-a-region pattern; Mistral OCR 4 markets
+    paragraph boxes + typed blocks as its flagship feature.</dd>
+    <dt>Rationale</dt>
+    <dd>This is the canonical "where did this text come from" trust interaction — the grounding/
+    citation pattern where trust is verified by clicking, not by reading a percentage. It turns the
+    invisible layout-detection stage into the visual centerpiece and directly exercises the exact
+    data (bboxes) the product sells to RAG builders. Five frames independently proposed a spatial
+    view; this variant was selected because it needs no backend change at all.</dd>
+    <dt>Downsides</dt>
+    <dd>Largest frontend build of the five (PDF.js integration inside Reflex, overlay math,
+    two-pane layout). Demo mode's hardcoded full-page bbox <code>[0,0,1000,1000]</code> renders as
+    a full-page highlight — honest, but visibly less impressive than hosted parses. Very large
+    PDFs cost client memory to render.</dd>
+  </dl>
+  <figure>
+    <svg viewBox="0 0 660 190" width="660" height="190" role="img" aria-label="Two panes: page with bounding boxes on the left, chunk list on the right, hover-synced highlight linking one box to one chunk">
+      <rect x="10" y="14" width="270" height="160" rx="8" fill="#fff" stroke="#a89f8a"/>
+      <text x="145" y="32" text-anchor="middle" font-size="11" font-weight="600" fill="#6b6353">page 3 (rendered client-side)</text>
+      <rect x="30" y="44" width="230" height="22" rx="3" fill="#e8f0fb" stroke="#1e5fb3"/>
+      <rect x="30" y="74" width="230" height="40" rx="3" fill="#fdf3d7" stroke="#b07d10" stroke-width="2"/>
+      <text x="145" y="98" text-anchor="middle" font-size="11" font-weight="600" fill="#8a6008">table region · hovered</text>
+      <rect x="30" y="122" width="150" height="20" rx="3" fill="#f0ece0" stroke="#a89f8a"/>
+      <rect x="30" y="148" width="200" height="18" rx="3" fill="#f0ece0" stroke="#a89f8a"/>
+      <rect x="380" y="14" width="270" height="160" rx="8" fill="#fff" stroke="#a89f8a"/>
+      <text x="515" y="32" text-anchor="middle" font-size="11" font-weight="600" fill="#6b6353">chunks</text>
+      <rect x="398" y="42" width="234" height="30" rx="5" fill="#f7f4ea" stroke="#d8d0ba"/>
+      <rect x="398" y="80" width="234" height="30" rx="5" fill="#fdf3d7" stroke="#b07d10" stroke-width="2"/>
+      <text x="515" y="99" text-anchor="middle" font-size="11" font-weight="600" fill="#8a6008">chunk #14 · table · p3</text>
+      <rect x="398" y="118" width="234" height="30" rx="5" fill="#f7f4ea" stroke="#d8d0ba"/>
+      <path d="M 262 94 C 320 94, 330 95, 394 95" fill="none" stroke="#b07d10" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="328" y="82" text-anchor="middle" font-size="11" font-weight="600" fill="#8a6008">hover sync</text>
+    </svg>
+    <figcaption>Hovering chunk #14 lights up its source box on the page — the bbox data already
+    reaches the browser today. Illustrative, not a spec.</figcaption>
+  </figure>
+</article>
+
+<article class="idea" id="idea3">
+  <header>
+    <span class="idchip">3</span>
+    <h3>Parse Forensics — timing waterfall + cost receipt</h3>
+    <span class="chips">
+      <span class="chip axis">pipeline-transparency</span>
+      <span class="chip conf">Conf 90%</span>
+      <span class="chip cx">Cx Small–Medium</span>
+    </span>
+  </header>
+  <dl>
+    <dt>Description</dt>
+    <dd>Replace the single "parse time" tile with two connected panels. (a) A <em>stage
+    waterfall</em>: wait → read → render → layout → crop → OCR → format as horizontal bars, with
+    queue-vs-exec splits — so a Modal cold start reads as "15 s queue wait, 2.1 s actual OCR"
+    instead of apparent slowness. (b) An itemized <em>cost receipt</em>: tokens in/out × model
+    rate = "$0.0042 for this parse · 0.4¢/page", with an optional comparison row against Azure
+    Document Intelligence / AWS Textract / Mistral list prices per page.</dd>
+    <dt>Basis</dt>
+    <dd><code>direct:</code> <code>src/bumblebee/stats.py:100-110</code> —
+    <code>durations_seconds</code> already records wait/read/render/layout/crop/ocr/format;
+    <code>models.py:145-166</code> (<code>DocumentTimings</code>) carries queue/exec splits; the
+    API payload already returns <code>tokens.{input,output,total}_tokens</code>
+    (<code>api.py:81-85</code>) which the UI fetches and silently drops
+    (<code>state.py:172-180</code> keeps only five tiles). <code>external:</code> the
+    baby-llamaParse reference ships a live cost-estimate footer; browser-devtools waterfalls are
+    the universally understood idiom for staged latency.</dd>
+    <dt>Rationale</dt>
+    <dd>The product is literally named <em>bumblebee</em> and the UI never states a price — the
+    core pitch ("OCR only where it earns its keep") is static marketing copy instead of a live,
+    per-document proof point. For the faculty audience, the waterfall doubles as evidence of
+    engineering rigor and defensively explains cold starts. Verified as the cheapest high-value
+    combination in the set: token data is already on the wire; timings need only a small
+    <code>api.py</code> payload addition.</dd>
+    <dt>Downsides</dt>
+    <dd>Stage timings live in the batch pipeline's stats today, not the <code>/v1/parse</code>
+    response — a small but real API payload change. Exposing <code>wait</code> reveals infra
+    behavior (cold starts); decide whether that's public. Competitor price comparisons need
+    sourcing and periodic upkeep.</dd>
+  </dl>
+  <figure>
+    <svg viewBox="0 0 660 168" width="660" height="168" role="img" aria-label="Waterfall of pipeline stages with a cost receipt beside it">
+      <text x="10" y="22" font-size="11" font-weight="600" fill="#6b6353">STAGE WATERFALL (18.3s total)</text>
+      <text x="10" y="46" font-size="11" fill="#6b6353">wait</text>
+      <rect x="70" y="34" width="240" height="14" rx="3" fill="#f0ece0" stroke="#a89f8a"/>
+      <text x="318" y="46" font-size="10.5" fill="#6b6353">12.1s (queue)</text>
+      <text x="10" y="68" font-size="11" fill="#6b6353">render</text>
+      <rect x="70" y="56" width="26" height="14" rx="3" fill="#e8f0fb" stroke="#1e5fb3"/>
+      <text x="10" y="90" font-size="11" fill="#6b6353">layout</text>
+      <rect x="96" y="78" width="36" height="14" rx="3" fill="#e8f0fb" stroke="#1e5fb3"/>
+      <text x="10" y="112" font-size="11" fill="#6b6353">OCR</text>
+      <rect x="132" y="100" width="118" height="14" rx="3" fill="#fdf3d7" stroke="#b07d10"/>
+      <text x="258" y="112" font-size="10.5" fill="#8a6008">3.6s</text>
+      <text x="10" y="134" font-size="11" fill="#6b6353">format</text>
+      <rect x="250" y="122" width="12" height="14" rx="3" fill="#e8f0fb" stroke="#1e5fb3"/>
+      <rect x="420" y="30" width="228" height="118" rx="8" fill="#fff" stroke="#a89f8a"/>
+      <text x="534" y="52" text-anchor="middle" font-size="11" font-weight="700" fill="#2a2418">RECEIPT</text>
+      <text x="436" y="74" font-size="11" fill="#6b6353">tokens in · 41,220</text>
+      <text x="436" y="92" font-size="11" fill="#6b6353">tokens out · 9,874</text>
+      <text x="436" y="110" font-size="11" font-weight="700" fill="#2e7d32">this parse · $0.0042</text>
+      <text x="436" y="128" font-size="10.5" fill="#b3541e">Azure DI same doc · ~$0.15</text>
+    </svg>
+    <figcaption>Cold-start wait becomes visibly distinct from real OCR time; the product's name
+    finally gets a number. Values illustrative.</figcaption>
+  </figure>
+</article>
+
+<article class="idea" id="idea4">
+  <header>
+    <span class="idchip">4</span>
+    <h3>Chunk Workbench — search, filters, section tree, re-chunk slider</h3>
+    <span class="chips">
+      <span class="chip axis">chunk-structure</span>
+      <span class="chip conf">Conf 85%</span>
+      <span class="chip cx">Cx Medium</span>
+    </span>
+  </header>
+  <dl>
+    <dt>Description</dt>
+    <dd>Turn the read-only chunk grid into an instrument. Four affordances: (a) full-text search
+    over chunks; (b) filters by kind / section / page; (c) expand-in-place past the 1,200-char
+    display cap (the full text already sits in server state — lazy-fetch on click); (d) the
+    standout: a <em>re-chunk slider</em> for <code>chunk_max_tokens</code> (128 / 256 / 512 /
+    1024) that rebuilds chunks instantly — chunks are derived purely from the layout JSON the
+    client interaction already has server-side, so re-chunking needs no re-parse, no GPU, no
+    network round-trip to Modal. A collapsible section tree (the chunker maintains a real heading
+    stack that the UI currently flattens into a breadcrumb string) becomes the navigator.</dd>
+    <dt>Basis</dt>
+    <dd><code>direct:</code> <code>src/bumblebee/chunks.py:1-12</code> — "Chunks are derived
+    purely from the per-page layout JSON that the formatter already produces… so they can be built
+    anywhere that JSON exists"; <code>chunk_max_tokens</code> is already a parse-endpoint parameter
+    (<code>api.py:104-107</code>); truncation at <code>state.py:168</code>
+    (<code>[:1200]</code>) with full text retained in <code>_chunks_jsonl</code>; heading stack at
+    <code>chunks.py:67-73</code>, flattened at <code>state.py:165</code>. The chunks-tab dossier
+    documents the absences: no search box, no filters, no expansion, no tree.</dd>
+    <dt>Rationale</dt>
+    <dd>The studio's target user is a RAG builder, and chunking granularity is the knob they care
+    about most — letting them tune it live against a real document, then download the JSONL they
+    shaped, is the difference between a demo and a tool. All of it is client/state-side work over
+    data the backend already produces; the section hierarchy work is literally already done and
+    then thrown away in a <code>join()</code>.</dd>
+    <dt>Downsides</dt>
+    <dd>The re-chunk slider needs the chunker callable from the web state (import or small
+    endpoint) and the layout JSON kept in session state for hosted parses. Search/filter over very
+    large documents may need debouncing. Scope discipline required — this is four small features
+    wearing one coat.</dd>
+  </dl>
+</article>
+
+<article class="idea" id="idea5">
+  <header>
+    <span class="idchip">5</span>
+    <h3>Instant Draft — race the engines + honest stage board</h3>
+    <span class="chips">
+      <span class="chip axis">upload-progress</span>
+      <span class="chip conf med">Conf 75%</span>
+      <span class="chip cx">Cx Medium</span>
+    </span>
+  </header>
+  <dl>
+    <dt>Description</dt>
+    <dd>Two moves against the blind wait. (a) <em>Instant draft:</em> on upload, immediately run
+    the local text-layer engine (near-instant for born-digital PDFs) and show provisional results
+    in ~1 s under a "draft — GPU parse running" banner; swap in the hosted results when they land.
+    The draft-vs-final diff doubles as a live exhibit of what plain text extraction misses.
+    (b) <em>Honest stage board:</em> replace the static "layout → OCR → chunks" label with a
+    CI-style board (pending → running → done per stage) whose ETAs come from prior runs' stage
+    timings scaled by page count — no streaming, no API change; full SSE progress is a deliberate
+    v2.</dd>
+    <dt>Basis</dt>
+    <dd><code>direct:</code> the two engines are one branch apart in
+    <code>web/bumblebee_studio/state.py:140-145</code> (<code>if hosted_configured():</code> …
+    hosted … else local), and <code>run_parse</code> is already a background Reflex event; the
+    parsing label is a hardcoded constant (<code>bumblebee_studio.py:139-151</code>) in front of a
+    single awaited JSON response with a 600 s timeout. <code>external:</code> CI dashboards
+    (GitHub Actions / Buildkite) solved the identical "remote job, no signal until done" problem
+    with expected-duration-from-previous-runs.</dd>
+    <dt>Rationale</dt>
+    <dd>A Modal cold start can mean 30–60 s of decorative spinner during the faculty demo — the
+    single highest-friction moment in the product, and where live demos die. The race converts the
+    product's built-in fallback engine into a perceived-performance feature using 100% existing
+    code paths, and the stage board is honest without requiring the streaming rearchitecture.</dd>
+    <dt>Downsides</dt>
+    <dd>The local engine hard-fails on scanned PDFs — the race path must turn that into a silent
+    skip (small change, but real). Draft-then-swap needs careful state design so results don't
+    flicker or mislead. ETA priors are estimates and should render as estimates. Verifier rated
+    this Medium-High confidence overall — the highest-uncertainty survivor.</dd>
+  </dl>
+  <figure>
+    <svg viewBox="0 0 660 150" width="660" height="150" role="img" aria-label="Timeline: local engine delivers a draft at one second while the hosted GPU parse finishes at thirty seconds and replaces it">
+      <line x1="80" y1="120" x2="640" y2="120" stroke="#a89f8a" stroke-width="1.5"/>
+      <text x="80" y="140" font-size="10.5" fill="#6b6353">0s</text>
+      <text x="180" y="140" font-size="10.5" fill="#6b6353">~1s</text>
+      <text x="560" y="140" font-size="10.5" fill="#6b6353">~30s</text>
+      <text x="10" y="46" font-size="11" font-weight="600" fill="#6b6353">local engine</text>
+      <rect x="110" y="34" width="70" height="18" rx="4" fill="#e8f0fb" stroke="#1e5fb3"/>
+      <rect x="180" y="30" width="120" height="26" rx="6" fill="#e8f0fb" stroke="#1e5fb3" stroke-width="1.5"/>
+      <text x="240" y="47" text-anchor="middle" font-size="11" font-weight="600" fill="#1e5fb3">DRAFT shown</text>
+      <text x="10" y="86" font-size="11" font-weight="600" fill="#6b6353">hosted GPU</text>
+      <rect x="110" y="74" width="450" height="18" rx="4" fill="#fdf3d7" stroke="#b07d10"/>
+      <rect x="560" y="70" width="88" height="26" rx="6" fill="#e8f3e9" stroke="#2e7d32" stroke-width="1.5"/>
+      <text x="604" y="87" text-anchor="middle" font-size="11" font-weight="600" fill="#2e7d32">FINAL swaps in</text>
+      <path d="M 300 43 C 420 43, 500 56, 570 68" fill="none" stroke="#2e7d32" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrg2)"/>
+      <text x="440" y="36" font-size="10.5" font-weight="600" fill="#2e7d32">user reads draft while GPU works</text>
+      <defs>
+        <marker id="arrg2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2e7d32"/></marker>
+      </defs>
+    </svg>
+    <figcaption>Perceived latency drops to ~1 s; the GPU result upgrades the draft when ready.
+    Illustrative, not a spec.</figcaption>
+  </figure>
+</article>
+
+<h2 id="rejection-summary">Rejection Summary</h2>
+<table>
+  <thead><tr><th>#</th><th>Idea</th><th>Reason Rejected</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Session ledger / parse history</td><td>Refuted by verification: no persistence infra exists (<code>reset_studio</code> wipes all state); "seed of public benchmarks" jumps ahead of the deliberate private-until-benchmarks stage; low value for a single-document demo.</td></tr>
+    <tr><td>2</td><td>Pixel-proof region crops</td><td>Basis overstated: base64 crops are discarded when OCR consumes them (<code>RecognizedRegion</code> has no image field) — real threading + payload-bloat cost, not "already built."</td></tr>
+    <tr><td>3</td><td>Server-side page thumbnails</td><td>Fights the existing <code>page.image.close()</code> lifecycle; the client-side Ghost Overlay (idea 2) delivers the same UX with zero server change.</td></tr>
+    <tr><td>4</td><td>Blame gutter on markdown</td><td>Hidden rearchitecture: markdown renders as one <code>rx.markdown</code> blob; per-block hover mapping requires decomposing the renderer.</td></tr>
+    <tr><td>5</td><td>Filmstrip document timeline</td><td>Silently depends on retained page thumbnails (rejected above); revisit if idea 2 ships and demand appears.</td></tr>
+    <tr><td>6</td><td>Full SSE/job streaming progress</td><td>Real backend rearchitecture (single sync request today); the ETA-prior stage board in idea 5 captures most of the value — revisit when the API shape is decided.</td></tr>
+    <tr><td>7</td><td>Actionable error diagnostics</td><td>Sound but lowest wow-per-effort for a curated-input demo; failure <code>phase</code> already reaches the client (double-wrapped in strings). Good backlog polish.</td></tr>
+    <tr><td>8</td><td>Evidence-pack HTML export</td><td>Derivative: its value depends on ideas 1–3 landing first; revisit as the take-home artifact after.</td></tr>
+    <tr><td>9</td><td>Worst-five gallery / SPC rework chart</td><td>Merged: strongest elements (retry story, threshold framing) folded into idea 1's review queue rather than kept as separate surfaces.</td></tr>
+  </tbody>
+</table>
+<p>All five topic axes have exactly one survivor — no coverage gaps.</p>
+
+<h2 id="sources-references">Sources &amp; References</h2>
+<ul>
+  <li><code>src/bumblebee/stats.py</code>, <code>api.py</code>, <code>pipeline.py</code>, <code>chunks.py</code>, <code>crops.py</code>, <code>models.py</code>, <code>format.py</code> — pipeline data model (verified by direct read)</li>
+  <li><code>web/bumblebee_studio/state.py</code>, <code>bumblebee_studio.py</code> — current studio UI and state machine (verified by direct read; branch <code>feat/landingai</code>)</li>
+  <li><a href="https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept/accuracy-confidence?view=doc-intel-4.0.0">Azure Document Intelligence — accuracy &amp; confidence</a> — per-field confidence semantics</li>
+  <li><a href="https://docs.aws.amazon.com/textract/latest/dg/API_GetDocumentAnalysis.html">AWS Textract — GetDocumentAnalysis</a> — block-level confidence</li>
+  <li><a href="https://github.com/run-llama/baby-llamaParse">run-llama/baby-llamaParse</a> — playground UX reference (fetched during research; treat feature specifics as reported, not re-verified)</li>
+  <li><a href="https://mistral.ai/news/ocr-4/">Mistral OCR 4</a> — paragraph bboxes, typed blocks</li>
+  <li><a href="https://help.sonix.ai/en/articles/1756215-how-do-i-use-sonix-s-heatmap-to-identify-potential-errors-in-my-transcript">Sonix confidence heatmap</a> — word-level heatmap toggle</li>
+</ul>
+
+<footer class="composition-signal">Composed 2026-07-16 by ce-ideate (repo-grounded) from the user
+prompt "top 5 new UX features, giving users as much information as possible" · 42 raw ideas from 6
+frames across 5 axes · adversarially verified against the repo</footer>
+</div>
+</body>
+</html>
