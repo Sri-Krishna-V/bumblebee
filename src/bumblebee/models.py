@@ -86,7 +86,8 @@ class RecognizedRegion:
 
     ``confidence`` is ``exp(mean token logprob)`` in (0, 1] when the OCR
     request returned logprobs; ``None`` for text-layer/skip regions and when
-    logprobs are disabled.
+    logprobs are disabled. ``confidence_before`` is the pre-retry confidence
+    when adaptive retry replaced this region's result.
     """
 
     region: Region
@@ -95,6 +96,7 @@ class RecognizedRegion:
     status_code: int | None = None
     latency_ms: int | None = None
     confidence: float | None = None
+    confidence_before: float | None = None
 
 
 @dataclass(slots=True, frozen=True)
