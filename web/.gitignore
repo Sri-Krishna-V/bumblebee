@@ -1,8 +1,10 @@
-.states
-assets/external/
-__pycache__/
-*.py[cod]
-*.db
-.web
+node_modules/
+.next/
+out/
+.web/
+.states/
 uploaded_files/
 reflex.log
+.env.local
+.env.production.local
+npm-debug.log*
