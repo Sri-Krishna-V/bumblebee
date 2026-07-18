@@ -347,7 +347,7 @@ class Pipeline:
                 region.confidence is None or (candidate.confidence or 0.0) > region.confidence
             )
             if candidate is not None and improved:
-                updated.append(candidate)
+                updated.append(dataclass_replace(candidate, confidence_before=region.confidence))
                 replaced += 1
             else:
                 updated.append(region)

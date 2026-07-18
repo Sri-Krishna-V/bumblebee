@@ -272,6 +272,7 @@ async def test_adaptive_retry_keeps_the_better_result(crop_executor):
     assert result is not None
     (text_region,) = [r for r in result.json[0] if r.get("_ocr_confidence") is not None]
     assert text_region["_ocr_confidence"] == 0.95
+    assert text_region["_ocr_confidence_before"] == 0.5
 
 
 async def test_adaptive_retry_disabled_by_config(crop_executor):
