@@ -3,7 +3,8 @@
 
 One GPU container holds a started :class:`~bumblebee.engine.DocumentEngine` and
 serves the FastAPI app from :mod:`bumblebee.api`. Deployment requires a Modal
-secret named ``bumblebee-api`` holding ``BUMBLEBEE_API_KEY``::
+secret named ``bumblebee-api`` holding either the compatible single-tenant
+``BUMBLEBEE_API_KEY`` or the tenant mapping ``BUMBLEBEE_API_KEYS_JSON``::
 
     modal secret create bumblebee-api BUMBLEBEE_API_KEY=<token>
     bumblebee deploy-api          # or: modal deploy -m bumblebee.modal.api
@@ -24,13 +25,14 @@ from bumblebee.modal.app import (
     app,
     hf_cache_vol,
     image,
+    pilot_data_vol,
     vllm_cache_vol,
 )
 
 # Short idle window so demo deployments don't silently burn GPU credit.
 API_SCALEDOWN_SECONDS = int(os.environ.get("BUMBLEBEE_API_SCALEDOWN_SECONDS", "120"))
 
-api_image = image.uv_pip_install("fastapi[standard]>=0.115")
+api_image = image.uv_pip_install("fastapi[standard]>=0.115").env({"BUMBLEBEE_USAGE_DB": "/data/usage.sqlite3"})
 
 
 @app.cls(
@@ -45,6 +47,7 @@ api_image = image.uv_pip_install("fastapi[standard]>=0.115")
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
+        "/data": pilot_data_vol,
     },
 )
 class ApiWorker:
@@ -63,7 +66,7 @@ class ApiWorker:
     def api(self):  # noqa: D102 - Modal web-endpoint hook; docs live on build_api.
         from bumblebee.api import build_api
 
-        return build_api(self.engine)
+        return build_api(self.engine, usage_checkpoint=pilot_data_vol.commit)
 
     @modal.exit()
     def stop(self) -> None:

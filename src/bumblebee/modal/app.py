@@ -31,6 +31,9 @@ MODAL_SECRETS = [modal.Secret.from_name(name) for name in MODAL.secret_names]
 # across runs and across machines.
 hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
 vllm_cache_vol = modal.Volume.from_name("vllm-cache", create_if_missing=True)
+# The hosted pilot keeps only metadata (tenant, page/token counts, timing, and
+# request ids) here. PDFs and OCR output never enter this volume.
+pilot_data_vol = modal.Volume.from_name("bumblebee-pilot-data", create_if_missing=True)
 
 PACKAGES = [
     "vllm==0.21.0",
