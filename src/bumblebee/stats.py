@@ -16,7 +16,9 @@ from typing import Any, cast
 
 from bumblebee.models import DocumentInput, DocumentResult, RecognizedRegion, TokenUsage
 
-PRIVATE_JSON_KEYS = frozenset({"_ocr_usage", "_ocr_latency_ms", "_ocr_status_code", "_ocr_confidence"})
+PRIVATE_JSON_KEYS = frozenset(
+    {"_ocr_usage", "_ocr_latency_ms", "_ocr_status_code", "_ocr_confidence", "_ocr_confidence_before"}
+)
 
 
 def utc_now_iso() -> str:
@@ -42,13 +44,13 @@ def latency_summary(values: list[int]) -> dict[str, int | None]:
     }
 
 
-def sanitize_layout_json(value: Any) -> Any:
-    """Remove private OCR metadata keys from a JSON-like object."""
+def sanitize_layout_json(value: Any, strip: frozenset[str] = PRIVATE_JSON_KEYS) -> Any:
+    """Remove private OCR metadata keys (``strip``) from a JSON-like object."""
     if isinstance(value, list):
-        return [sanitize_layout_json(item) for item in cast(list[Any], value)]
+        return [sanitize_layout_json(item, strip) for item in cast(list[Any], value)]
     if isinstance(value, dict):
         mapping = cast(Mapping[str, Any], value)
-        return {key: sanitize_layout_json(item) for key, item in mapping.items() if key not in PRIVATE_JSON_KEYS}
+        return {key: sanitize_layout_json(item, strip) for key, item in mapping.items() if key not in strip}
     return value
 
 
