@@ -74,7 +74,7 @@ def materialize_candidate(
         shutil.copyfile(markdown, destination)
         copied.add(relative_pdf)
 
-    missing = sorted((path.as_posix() for path in expected - copied))
+    missing = sorted(path.as_posix() for path in expected - copied)
     return Coverage(
         expected_pages=len(expected),
         copied_pages=len(copied),
@@ -97,7 +97,12 @@ def repository_revision() -> str | None:
 def main() -> None:
     """Expose strict candidate materialization as a command-line operation."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bench-data", type=Path, required=True, help="Directory containing official JSONL files and pdfs/.")
+    parser.add_argument(
+        "--bench-data",
+        type=Path,
+        required=True,
+        help="Directory containing official JSONL files and pdfs/.",
+    )
     parser.add_argument("--source", type=Path, required=True, help="Bumblebee Modal batch-output directory.")
     parser.add_argument("--candidate", default="bumblebee", help="Candidate folder name under --bench-data.")
     parser.add_argument("--repeat", type=int, default=1)
@@ -129,7 +134,9 @@ def main() -> None:
     print(json.dumps(manifest, indent=2))
 
     if coverage.missing_pages and not args.allow_incomplete:
-        raise SystemExit(f"refusing to score incomplete candidate: {len(coverage.missing_pages)} benchmark PDFs are missing")
+        raise SystemExit(
+            f"refusing to score incomplete candidate: {len(coverage.missing_pages)} benchmark PDFs are missing"
+        )
 
 
 if __name__ == "__main__":
