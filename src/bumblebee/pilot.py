@@ -29,7 +29,7 @@ import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 _TENANT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _MAX_IDEMPOTENCY_KEY_LENGTH = 200
@@ -120,7 +120,8 @@ class ApiKeyRegistry:
                 raise PilotConfigError("BUMBLEBEE_API_KEYS_JSON is not valid JSON") from exc
             if not isinstance(parsed, dict) or not parsed:
                 raise PilotConfigError("BUMBLEBEE_API_KEYS_JSON must be a non-empty tenant mapping")
-            principals = [cls._principal_from_config(str(tenant), config) for tenant, config in parsed.items()]
+            entries = cast("dict[str, Any]", parsed)
+            principals = [cls._principal_from_config(str(tenant), config) for tenant, config in entries.items()]
             return cls(principals)
 
         legacy_key = os.environ.get("BUMBLEBEE_API_KEY")
@@ -147,9 +148,10 @@ class ApiKeyRegistry:
             token = config
             page_limit = None
         elif isinstance(config, dict):
-            raw_token = config.get("key")
+            entry = cast("dict[str, Any]", config)
+            raw_token = entry.get("key")
             token = raw_token if isinstance(raw_token, str) else ""
-            page_limit = _positive_int(config.get("monthly_page_limit"), name=f"{tenant_id}.monthly_page_limit")
+            page_limit = _positive_int(entry.get("monthly_page_limit"), name=f"{tenant_id}.monthly_page_limit")
         else:
             raise PilotConfigError(f"{tenant_id!r} must be a token string or object")
         if not token.strip():
