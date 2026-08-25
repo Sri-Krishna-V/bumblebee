@@ -143,23 +143,23 @@ def test_write_outputs_skips_chunks_when_disabled():
     assert "out/doc/content.md" in storage.files
 
 
-def test_bumblebee_entry_point_defaults_chunks_on(monkeypatch):
-    import bumblebee.bumblebee as bumblebee
+def test_rag_entry_point_defaults_chunks_on(monkeypatch):
+    import bumblebee.cli as cli
 
     calls: list[str] = []
-    monkeypatch.setattr(bumblebee, "app", lambda: calls.append("ran"))
+    monkeypatch.setattr(cli, "app", lambda: calls.append("ran"))
     try:
-        bumblebee.main()
+        cli.rag_main()
         assert os.environ["BUMBLEBEE_EMIT_CHUNKS"] == "1"
         assert calls == ["ran"]
     finally:
         os.environ.pop("BUMBLEBEE_EMIT_CHUNKS", None)
 
 
-def test_bumblebee_respects_preset_environment(monkeypatch):
-    import bumblebee.bumblebee as bumblebee
+def test_rag_entry_point_respects_preset_environment(monkeypatch):
+    import bumblebee.cli as cli
 
     monkeypatch.setenv("BUMBLEBEE_EMIT_CHUNKS", "0")
-    monkeypatch.setattr(bumblebee, "app", lambda: None)
-    bumblebee.main()
+    monkeypatch.setattr(cli, "app", lambda: None)
+    cli.rag_main()
     assert os.environ["BUMBLEBEE_EMIT_CHUNKS"] == "0"

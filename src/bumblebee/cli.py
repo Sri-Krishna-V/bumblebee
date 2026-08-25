@@ -1,4 +1,4 @@
-"""Command-line interface for bumblebee.
+"""Command-line interface for Bumblebee.
 
 The default command runs the whole pipeline in-process on the current GPU box
 (no provider SDK). SSH into a GPU instance, install the package, and run::
@@ -37,7 +37,7 @@ from bumblebee.logging import configure_logging
 app = typer.Typer(
     add_completion=False,
     help=(
-        "cheap, fast single-GPU PDF OCR. The default command runs the pipeline in-process on the local GPU; "
+        "Cheap, fast single-GPU PDF OCR. The default command runs the pipeline in-process on the local GPU; "
         "the 'modal' subcommand runs the Modal-backed workflow. Source/target may be local paths or cloud URIs. "
         "Unset flags fall back to BUMBLEBEE_* environment variables, then to the built-in defaults."
     ),
@@ -491,7 +491,7 @@ def modal(
     command = ["modal", "run"]
     if detach:
         # Modal's own detach flag must appear before FUNC_REF; the later
-        # `--detach` is the bumblebee entrypoint flag that submits the
+        # `--detach` is the Bumblebee entrypoint flag that submits the
         # non-preemptible cloud supervisor and returns immediately.
         command.append("--detach")
     command += ["-m", "bumblebee.modal.run::run"]
@@ -509,8 +509,42 @@ def modal(
     raise typer.Exit(code=result.returncode)
 
 
+@app.command(name="deploy-api")
+def deploy_api() -> None:
+    """Deploy the Bumblebee hosted API to Modal (persistent web endpoint).
+
+    Requires the ``modal`` CLI and a Modal secret named ``bumblebee-api``
+    holding ``BUMBLEBEE_API_KEY``. Engine/Modal settings come from the ambient
+    ``BUMBLEBEE_*`` environment variables, like every other run mode.
+    """
+    if shutil.which("modal") is None:
+        raise typer.BadParameter(
+            "The `modal` CLI is not installed. Install the Modal extra: pip install 'bumblebee[modal]'."
+        )
+    result = subprocess.run(["modal", "deploy", "-m", "bumblebee.modal.api"], check=False)
+    raise typer.Exit(code=result.returncode)
+
+
 def main() -> None:
-    """Run the bumblebee CLI (the ``bumblebee`` console script)."""
+    """Run the Bumblebee CLI with chunk emission left to configuration.
+
+    Not wired to a console script: the shipped ``bumblebee`` command is
+    :func:`rag_main`. Kept as the plain programmatic entry point.
+    """
+    app()
+
+
+def rag_main() -> None:
+    """Run the Bumblebee CLI (the ``bumblebee`` console script).
+
+    The same commands and flags as :func:`main`, with chunk emission defaulted
+    **on**: every document gets a RAG-ready ``chunks.jsonl`` beside its
+    markdown. Explicit ``--no-chunks`` flags and pre-set
+    ``BUMBLEBEE_EMIT_CHUNKS`` environment values still win.
+    """
+    # The env default is how the shared config resolves unset flags, so setting
+    # it here flips the ingestion default without forking the CLI.
+    os.environ.setdefault("BUMBLEBEE_EMIT_CHUNKS", "1")
     app()
 
 
