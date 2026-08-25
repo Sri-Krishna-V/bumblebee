@@ -1,4 +1,4 @@
-"""RAG chunk building from formatted layout JSON (the bumblebee product surface).
+"""RAG chunk building from formatted layout JSON (the RAG product surface).
 
 Chunks are derived purely from the per-page layout JSON that the formatter
 already produces (``label``, ``native_label``, ``content``, ``bbox_2d``), so

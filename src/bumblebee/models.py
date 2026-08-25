@@ -1,4 +1,4 @@
-"""Data models for bumblebee: pages, regions, documents, and results."""
+"""Data models for Bumblebee: pages, regions, documents, and results."""
 
 from dataclasses import dataclass, field
 from enum import StrEnum

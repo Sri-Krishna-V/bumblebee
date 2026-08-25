@@ -1,5 +1,5 @@
 # pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUntypedFunctionDecorator=false
-"""Modal entrypoint for bumblebee (``modal run -m bumblebee.modal.run::run``).
+"""Modal entrypoint for Bumblebee (``modal run -m bumblebee.modal.run::run``).
 
 Both run modes drive the same batch supervisor; they differ only in where
 batches are prepared and stored:
@@ -54,7 +54,7 @@ def run(
     limit: int | None = None,
     detach: bool = False,
 ) -> None:
-    """Run bumblebee on Modal with resumable all-in-worker batches.
+    """Run Bumblebee on Modal with resumable all-in-worker batches.
 
     ``config`` and ``policy`` are JSON objects with :class:`OcrConfig` /
     :class:`BatchPolicy` fields (unknown keys are rejected). With ``--detach``

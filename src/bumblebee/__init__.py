@@ -1,4 +1,4 @@
-"""bumblebee: cheap, fast single-GPU PDF OCR.
+"""Bumblebee: cheap, fast single-GPU PDF OCR.
 
 Co-locates the PP-DocLayoutV3 layout detector and the GLM-OCR recognizer (served
 by an in-process vLLM OpenAI server with continuous batching) on a single GPU,

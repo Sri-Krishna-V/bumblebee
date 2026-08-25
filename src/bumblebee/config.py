@@ -1,4 +1,4 @@
-"""User-facing configuration for bumblebee.
+"""User-facing configuration for Bumblebee.
 
 Two scopes, two dataclasses (plus :class:`ModalConfig` for the Modal launcher):
 
@@ -92,7 +92,7 @@ def env_overrides(config_cls: type, values: Mapping[str, Any]) -> dict[str, str]
 
 @dataclass(frozen=True, slots=True)
 class OcrConfig:
-    """Configuration for one bumblebee run.
+    """Configuration for one Bumblebee run.
 
     Carries everything that can vary per call; startup-scoped knobs (vLLM server
     flags, layout backend) live on :class:`EngineConfig`.
@@ -142,7 +142,7 @@ class OcrConfig:
     temperature: float = env_field("BUMBLEBEE_TEMPERATURE", 0.0, float)
     top_p: float = env_field("BUMBLEBEE_TOP_P", 0.00001, float)
 
-    # RAG chunk output (bumblebee). ``emit_chunks`` writes a chunks.jsonl beside
+    # RAG chunk output. ``emit_chunks`` writes a chunks.jsonl beside
     # each document's markdown; ``chunk_max_tokens`` is the approximate token
     # budget per packed text chunk.
     emit_chunks: bool = env_field("BUMBLEBEE_EMIT_CHUNKS", False, parse_bool)

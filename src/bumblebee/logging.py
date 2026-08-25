@@ -1,11 +1,11 @@
-"""Logging setup for bumblebee entrypoints.
+"""Logging setup for Bumblebee entrypoints.
 
 Library modules obtain a logger with ``logging.getLogger(__name__)`` and never
 configure logging at import time. The actual entrypoints (the bare-metal CLI and
 the Modal GPU worker) call :func:`configure_logging` once at startup to attach a
 stderr handler to the ``bumblebee`` logger.
 
-The handler is attached to the package logger (not the root logger) so bumblebee
+The handler is attached to the package logger (not the root logger) so Bumblebee
 controls its own namespace without clobbering host-application or third-party
 logging configuration.
 """

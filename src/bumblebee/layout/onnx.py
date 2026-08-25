@@ -1,5 +1,5 @@
 # pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false, reportUnknownVariableType=false
-"""ONNX Runtime PP-DocLayoutV3 detector (RT-DETR export, blue-guardrails/pp-doclayout-v3-onnx).
+"""ONNX Runtime PP-DocLayoutV3 detector (RT-DETR export).
 
 A drop-in replacement for the transformers ``LayoutDetector``: same
 ``detect_pages(pages) -> dict[page_index, list[Region]]`` interface and the same
@@ -31,6 +31,8 @@ from bumblebee.models import Page, Region
 
 logger = logging.getLogger(__name__)
 
+# Hugging Face repo path the ONNX export is published under; it is resolved
+# verbatim by ``hf_hub_download`` and must match the hosted weights.
 HF_REPO = "blue-guardrails/pp-doclayout-v3-onnx"
 ONNX_FILE = "onnx/inference.onnx"
 INPUT_SIZE = 800

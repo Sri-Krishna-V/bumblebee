@@ -1,1 +1,1 @@
-"""Modal launcher for bumblebee (install the ``bumblebee[modal]`` extra)."""
+"""Modal launcher for Bumblebee (install the ``bumblebee[modal]`` extra)."""

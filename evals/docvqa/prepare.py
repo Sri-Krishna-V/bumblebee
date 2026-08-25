@@ -7,7 +7,7 @@ documents. Requires the ``evals`` dependency group::
     uv run --group evals python -m evals.docvqa.prepare --limit 20   # subset dry-run
     uv run --group evals python -m evals.docvqa.prepare              # full split (~1,300 docs)
 
-Then parse the PDFs with bumblebee/bumblebee (Modal or local GPU)::
+Then parse the PDFs with bumblebee (Modal or local GPU)::
 
     bumblebee modal --source evals/data/docvqa/pdfs --target evals/data/docvqa/parsed
 """

@@ -204,7 +204,7 @@ def _process(grouped_results: list[list[dict[str, Any]]]) -> tuple[list[list[dic
             content = result["content"]
             if result.pop("_is_image", False):
                 # Image regions stay in the layout JSON (with null content) but
-                # produce no markdown; bumblebee does not extract crop files.
+                # produce no markdown; Bumblebee does not extract crop files.
                 continue
             elif content:
                 markdown_page_results.append(content)

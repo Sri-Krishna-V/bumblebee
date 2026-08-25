@@ -1,1 +1,1 @@
-# Benchmark harness for bumblebee/bumblebee. Not shipped with the package.
+# Benchmark harness for bumblebee. Not shipped with the package.

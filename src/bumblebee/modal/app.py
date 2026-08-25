@@ -1,5 +1,5 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false
-"""Modal app, image, and volumes for the bumblebee launcher.
+"""Modal app, image, and volumes for the Bumblebee launcher.
 
 One container holds both models on one GPU: PP-DocLayoutV3 layout detection
 (PyTorch/ONNX) and GLM-OCR served by an in-container vLLM OpenAI server. The

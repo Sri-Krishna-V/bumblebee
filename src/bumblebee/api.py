@@ -58,7 +58,7 @@ def build_api(
         store = None
         config_error = str(exc)
 
-    api = FastAPI(title="bumblebee", description="PDF in, layout-aware markdown + RAG chunks out.")
+    api = FastAPI(title="Bumblebee", description="PDF in, layout-aware markdown + RAG chunks out.")
 
     def require_principal(authorization: str | None) -> ApiPrincipal:
         """Authenticate a design partner or return a safe operational error."""

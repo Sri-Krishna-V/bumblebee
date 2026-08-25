@@ -51,7 +51,7 @@ api_image = image.uv_pip_install("fastapi[standard]>=0.115").env({"BUMBLEBEE_USA
     },
 )
 class ApiWorker:
-    """One GPU container serving the bumblebee parse API."""
+    """One GPU container serving the Bumblebee parse API."""
 
     @modal.enter()
     def start(self) -> None:
