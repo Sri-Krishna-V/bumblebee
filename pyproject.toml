@@ -5,16 +5,12 @@ build-backend = "uv_build"
 [project]
 name = "bumblebee"
 version = "0.1.0"
-description = "Cheap, fast single-GPU PDF OCR (PP-DocLayoutV3 + GLM-OCR via vLLM)"
+description = "Layout-aware PDF/document OCR and RAG-ingestion pipeline (PP-DocLayoutV3 layout detection + GLM-OCR via vLLM) emitting markdown and RAG-ready chunks"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
-license = "Apache-2.0"
+license = "LicenseRef-Proprietary"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Sri Krishna V" },
-    { name = "Sri Krishna V" },
-]
-maintainers = [
     { name = "Sri Krishna V", email = "srikrishna.vundavalli@gmail.com" },
 ]
 classifiers = [
@@ -84,8 +80,7 @@ dev = [
 ]
 
 [project.scripts]
-bumblebee = "bumblebee.cli:main"
-bumblebee = "bumblebee.bumblebee:main"
+bumblebee = "bumblebee.cli:rag_main"
 
 [project.urls]
 Documentation = "https://github.com/Sri-Krishna-V/bumblebee#readme"

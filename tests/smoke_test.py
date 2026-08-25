@@ -1,4 +1,4 @@
-"""Release smoke test for built bumblebee distributions."""
+"""Release smoke test for built Bumblebee distributions."""
 
 import os
 from importlib.metadata import metadata, version as installed_version
@@ -26,7 +26,7 @@ def main() -> None:
 
     package_metadata = metadata("bumblebee")
     assert_equal(package_metadata["Name"], "bumblebee", "unexpected package name")
-    assert_equal(package_metadata["License-Expression"], "Apache-2.0", "unexpected package license")
+    assert_equal(package_metadata["License-Expression"], "LicenseRef-Proprietary", "unexpected package license")
 
     config = OcrConfig()
     assert_equal(config.pdf_dpi, 100, "unexpected default OCR DPI")
